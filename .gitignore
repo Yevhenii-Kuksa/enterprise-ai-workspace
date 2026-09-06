@@ -1,0 +1,59 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE / editors
+.vscode/
+.idea/
+
+# Operating system
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Runtime / temporary files
+tmp/
+temp/
+*.tmp
+
+# Local data
+data/local/
+data/uploads/
+storage/
+
+# Database dumps & backups
+*.sql
+*.dump
+*.backup
+
+# Docker local overrides
+docker-compose.override.yml
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.next/
+
+# Test / tooling caches
+.cache/
