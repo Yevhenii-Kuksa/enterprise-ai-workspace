@@ -57,3 +57,6 @@ build/
 
 # Test / tooling caches
 .cache/
+
+# Python package metadata
+*.egg-info/
