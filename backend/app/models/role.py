@@ -2,19 +2,26 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 if TYPE_CHECKING:
-    from app.models.department import Department
-    from app.models.role import Role
+    from app.models.organization import Organization
     from app.models.user import User
 
-class Organization(Base):
-    __tablename__ = "organizations"
+
+class Role(Base):
+    __tablename__ = "roles"
+    __table_args__ = (
+        UniqueConstraint(
+            "organization_id",
+            "code",
+            name="uq_roles_organization_code",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -22,11 +29,16 @@ class Organization(Base):
         default=uuid.uuid4,
     )
 
-    code: Mapped[str] = mapped_column(
-        String(50),
-        unique=True,
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
+    )
+
+    code: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
     )
 
     name: Mapped[str] = mapped_column(
@@ -47,20 +59,19 @@ class Organization(Base):
         nullable=False,
     )
 
-    departments: Mapped[list["Department"]] = relationship(
-        "Department",
-        back_populates="organization",
-        cascade="all, delete-orphan",
+    organization: Mapped["Organization"] = relationship(
+        "Organization",
+        back_populates="roles",
     )
 
     users: Mapped[list["User"]] = relationship(
         "User",
-        back_populates="organization",
-        cascade="all, delete-orphan",
+        secondary="user_roles",
+        back_populates="roles",
     )
 
     roles: Mapped[list["Role"]] = relationship(
         "Role",
-        back_populates="organization",
-        cascade="all, delete-orphan",
+        secondary="user_roles",
+        back_populates="users",
     )

@@ -2,25 +2,19 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.department import Department
     from app.models.organization import Organization
-    from app.models.user import User
 
-class Department(Base):
-    __tablename__ = "departments"
-    __table_args__ = (
-        UniqueConstraint(
-            "organization_id",
-            "code",
-            name="uq_departments_organization_code",
-        ),
-    )
+
+class User(Base):
+    __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -35,14 +29,29 @@ class Department(Base):
         index=True,
     )
 
-    code: Mapped[str] = mapped_column(
-        String(50),
+    department_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("departments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    email: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    full_name: Mapped[str] = mapped_column(
+        String(255),
         nullable=False,
     )
 
-    name: Mapped[str] = mapped_column(
-        String(255),
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
         nullable=False,
+        server_default="true",
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -60,10 +69,10 @@ class Department(Base):
 
     organization: Mapped["Organization"] = relationship(
         "Organization",
-        back_populates="departments",
+        back_populates="users",
     )
 
-    users: Mapped[list["User"]] = relationship(
-        "User",
-        back_populates="department",
+    department: Mapped["Department | None"] = relationship(
+        "Department",
+        back_populates="users",
     )
