@@ -11,6 +11,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.department import Department
     from app.models.organization import Organization
+    from app.models.role import Role
 
 
 class User(Base):
@@ -74,5 +75,11 @@ class User(Base):
 
     department: Mapped["Department | None"] = relationship(
         "Department",
+        back_populates="users",
+    )
+
+    roles: Mapped[list["Role"]] = relationship(
+        "Role",
+        secondary="user_roles",
         back_populates="users",
     )
