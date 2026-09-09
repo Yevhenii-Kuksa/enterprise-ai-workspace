@@ -10,6 +10,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.organization import Organization
+    from app.models.permission import Permission
     from app.models.user import User
 
 
@@ -70,8 +71,8 @@ class Role(Base):
         back_populates="roles",
     )
 
-    roles: Mapped[list["Role"]] = relationship(
-        "Role",
-        secondary="user_roles",
-        back_populates="users",
+    permissions: Mapped[list["Permission"]] = relationship(
+        "Permission",
+        secondary="role_permissions",
+        back_populates="roles",
     )

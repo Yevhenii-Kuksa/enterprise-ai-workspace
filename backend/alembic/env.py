@@ -5,7 +5,9 @@ from app.core.config import get_settings
 from app.db.base import Base
 from app.models.department import Department  # noqa: F401
 from app.models.organization import Organization  # noqa: F401
+from app.models.permission import Permission  # noqa: F401
 from app.models.role import Role  # noqa: F401
+from app.models.role_permission import role_permissions  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.user_role import user_roles  # noqa: F401
 from sqlalchemy import engine_from_config, pool
