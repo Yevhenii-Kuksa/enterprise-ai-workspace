@@ -17,6 +17,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.department import Department
+    from app.models.document_version import DocumentVersion
     from app.models.organization import Organization
 
 
@@ -98,4 +99,10 @@ class Document(Base):
     department: Mapped["Department | None"] = relationship(
         "Department",
         back_populates="documents",
+    )
+
+    versions: Mapped[list["DocumentVersion"]] = relationship(
+        "DocumentVersion",
+        back_populates="document",
+        cascade="all, delete-orphan",
     )

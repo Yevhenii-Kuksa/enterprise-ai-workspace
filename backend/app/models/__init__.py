@@ -1,5 +1,6 @@
 from app.models.department import Department
 from app.models.document import Document
+from app.models.document_version import DocumentVersion
 from app.models.organization import Organization
 from app.models.permission import Permission
 from app.models.role import Role
@@ -10,6 +11,7 @@ from app.models.user_role import user_roles
 __all__ = [
     "Department",
     "Document",
+    "DocumentVersion",
     "Organization",
     "Permission",
     "Role",
