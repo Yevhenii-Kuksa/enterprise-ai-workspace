@@ -10,6 +10,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.department import Department
+    from app.models.document import Document
     from app.models.role import Role
     from app.models.user import User
 
@@ -61,6 +62,12 @@ class Organization(Base):
 
     roles: Mapped[list["Role"]] = relationship(
         "Role",
+        back_populates="organization",
+        cascade="all, delete-orphan",
+    )
+
+    documents: Mapped[list["Document"]] = relationship(
+        "Document",
         back_populates="organization",
         cascade="all, delete-orphan",
     )
