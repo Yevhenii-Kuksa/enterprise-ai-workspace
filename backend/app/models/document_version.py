@@ -17,6 +17,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.document import Document
+    from app.models.document_chunk import DocumentChunk
     from app.models.organization import Organization
 
 
@@ -105,4 +106,10 @@ class DocumentVersion(Base):
     organization: Mapped["Organization"] = relationship(
         "Organization",
         back_populates="document_versions",
+    )
+
+    chunks: Mapped[list["DocumentChunk"]] = relationship(
+        "DocumentChunk",
+        back_populates="document_version",
+        cascade="all, delete-orphan",
     )
