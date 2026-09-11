@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from app.core.config import get_settings
 from app.db.base import Base
+from app.models.chunk_embedding import ChunkEmbedding  # noqa: F401
 from app.models.department import Department  # noqa: F401
 from app.models.document import Document  # noqa: F401
 from app.models.document_chunk import DocumentChunk  # noqa: F401

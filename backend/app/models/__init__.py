@@ -1,3 +1,4 @@
+from app.models.chunk_embedding import ChunkEmbedding
 from app.models.department import Department
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
@@ -10,6 +11,7 @@ from app.models.user import User
 from app.models.user_role import user_roles
 
 __all__ = [
+    "ChunkEmbedding",
     "DocumentChunk",
     "Department",
     "Document",

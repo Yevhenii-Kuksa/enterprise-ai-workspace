@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.chunk_embedding import ChunkEmbedding
     from app.models.department import Department
     from app.models.document import Document
     from app.models.document_chunk import DocumentChunk
@@ -82,6 +83,12 @@ class Organization(Base):
 
     document_chunks: Mapped[list["DocumentChunk"]] = relationship(
         "DocumentChunk",
+        back_populates="organization",
+        cascade="all, delete-orphan",
+    )
+
+    chunk_embeddings: Mapped[list["ChunkEmbedding"]] = relationship(
+        "ChunkEmbedding",
         back_populates="organization",
         cascade="all, delete-orphan",
     )
