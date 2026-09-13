@@ -21,6 +21,7 @@ def build_current_user(
     return CurrentUser(
         id=user.id,
         organization_id=user.organization_id,
+        department_id=user.department_id,
         is_active=user.is_active,
         permissions=permissions,
     )

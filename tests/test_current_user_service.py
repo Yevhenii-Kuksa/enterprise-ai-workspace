@@ -1,7 +1,7 @@
 import uuid
 
 from app.db.session import SessionLocal
-from app.models.department import Department  # noqa: F401
+from app.models.department import Department
 from app.models.organization import Organization
 from app.models.permission import Permission
 from app.models.role import Role
@@ -12,8 +12,9 @@ from app.security.current_user_service import build_current_user
 from sqlalchemy import delete
 
 
-def test_build_current_user_returns_user_with_permissions() -> None:
+def test_build_current_user_returns_user_with_permissions_and_department() -> None:
     organization_id = uuid.uuid4()
+    department_id = uuid.uuid4()
     user_id = uuid.uuid4()
     role_id = uuid.uuid4()
     permission_id = uuid.uuid4()
@@ -29,9 +30,18 @@ def test_build_current_user_returns_user_with_permissions() -> None:
             )
         )
         db.add(
+            Department(
+                id=department_id,
+                organization_id=organization_id,
+                code=f"DEPT-{department_id.hex[:8]}",
+                name="Test Department",
+            )
+        )
+        db.add(
             User(
                 id=user_id,
                 organization_id=organization_id,
+                department_id=department_id,
                 email=f"{user_id.hex}@example.com",
                 full_name="Test Current User",
                 is_active=True,
@@ -74,13 +84,43 @@ def test_build_current_user_returns_user_with_permissions() -> None:
         assert current_user is not None
         assert current_user.id == user_id
         assert current_user.organization_id == organization_id
+        assert current_user.department_id == department_id
         assert current_user.is_active is True
         assert current_user.permissions == {permission_code}
 
-        db.execute(delete(role_permissions).where(role_permissions.c.role_id == role_id))
-        db.execute(delete(user_roles).where(user_roles.c.user_id == user_id))
-        db.execute(delete(Permission).where(Permission.id == permission_id))
-        db.execute(delete(Role).where(Role.id == role_id))
-        db.execute(delete(User).where(User.id == user_id))
-        db.execute(delete(Organization).where(Organization.id == organization_id))
+        db.execute(
+            delete(role_permissions).where(
+                role_permissions.c.role_id == role_id
+            )
+        )
+        db.execute(
+            delete(user_roles).where(
+                user_roles.c.user_id == user_id
+            )
+        )
+        db.execute(
+            delete(Permission).where(
+                Permission.id == permission_id
+            )
+        )
+        db.execute(
+            delete(Role).where(
+                Role.id == role_id
+            )
+        )
+        db.execute(
+            delete(User).where(
+                User.id == user_id
+            )
+        )
+        db.execute(
+            delete(Department).where(
+                Department.id == department_id
+            )
+        )
+        db.execute(
+            delete(Organization).where(
+                Organization.id == organization_id
+            )
+        )
         db.commit()
