@@ -9,6 +9,10 @@ def _evidence_item(
     title: str,
     content: str,
     distance: float,
+    page_number: int | None = None,
+    section_title: str | None = None,
+    source_system: str | None = None,
+    source_uri: str | None = None,
 ) -> EvidenceItem:
     return EvidenceItem(
         chunk_id=uuid.uuid4(),
@@ -18,11 +22,11 @@ def _evidence_item(
         content=content,
         chunk_index=0,
         distance=distance,
-        page_number=None,
-        section_title=None,
+        page_number=page_number,
+        section_title=section_title,
         source_locator=None,
-        source_system=None,
-        source_uri=None,
+        source_system=source_system,
+        source_uri=source_uri,
     )
 
 
@@ -100,6 +104,55 @@ def test_build_rag_context_includes_document_title_and_content() -> None:
         "Content: Towar należy przyjąć zgodnie z instrukcją."
         in context.context_text
     )
+
+
+def test_build_rag_context_includes_citation_metadata() -> None:
+    source = CitationSource(
+        label="S1",
+        evidence=_evidence_item(
+            title="Procedura magazynowa",
+            content="Towar należy przyjąć zgodnie z instrukcją.",
+            distance=0.1,
+            page_number=4,
+            section_title="Przyjęcie towaru",
+            source_system="sharepoint",
+            source_uri="https://example.test/procedura-magazynowa",
+        ),
+    )
+
+    context = build_rag_context(
+        query="Jak przyjąć towar?",
+        sources=[source],
+    )
+
+    assert "Page: 4" in context.context_text
+    assert "Section: Przyjęcie towaru" in context.context_text
+    assert "Source system: sharepoint" in context.context_text
+    assert (
+        "Source URI: https://example.test/procedura-magazynowa"
+        in context.context_text
+    )
+
+
+def test_build_rag_context_omits_missing_optional_metadata() -> None:
+    source = CitationSource(
+        label="S1",
+        evidence=_evidence_item(
+            title="Procedura magazynowa",
+            content="Treść dokumentu.",
+            distance=0.1,
+        ),
+    )
+
+    context = build_rag_context(
+        query="Pytanie",
+        sources=[source],
+    )
+
+    assert "Page:" not in context.context_text
+    assert "Section:" not in context.context_text
+    assert "Source system:" not in context.context_text
+    assert "Source URI:" not in context.context_text
 
 
 def test_build_rag_context_returns_empty_context_for_no_sources() -> None:

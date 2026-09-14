@@ -10,6 +10,29 @@ class RagContext:
     context_text: str
 
 
+def _build_source_block(source: CitationSource) -> str:
+    lines = [
+        f"[{source.label}]",
+        f"Document: {source.evidence.document_title}",
+    ]
+
+    if source.evidence.page_number is not None:
+        lines.append(f"Page: {source.evidence.page_number}")
+
+    if source.evidence.section_title is not None:
+        lines.append(f"Section: {source.evidence.section_title}")
+
+    if source.evidence.source_system is not None:
+        lines.append(f"Source system: {source.evidence.source_system}")
+
+    if source.evidence.source_uri is not None:
+        lines.append(f"Source URI: {source.evidence.source_uri}")
+
+    lines.append(f"Content: {source.evidence.content}")
+
+    return "\n".join(lines)
+
+
 def build_rag_context(
     *,
     query: str,
@@ -21,11 +44,7 @@ def build_rag_context(
         raise ValueError("Query must not be empty.")
 
     context_blocks = [
-        (
-            f"[{source.label}]\n"
-            f"Document: {source.evidence.document_title}\n"
-            f"Content: {source.evidence.content}"
-        )
+        _build_source_block(source)
         for source in sources
     ]
 

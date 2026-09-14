@@ -108,6 +108,7 @@ def test_build_evidence_items_preserves_result_order() -> None:
         0.2,
     ]
 
+
 def test_build_citation_sources_assigns_stable_labels() -> None:
     evidence = build_evidence_items(
         [
