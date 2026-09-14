@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
 
+    ai_answer_provider: Literal["openai"] = "openai"
+    ai_answer_model: str = "gpt-5.6-luna"
+
     openai_api_key: SecretStr | None = None
 
     model_config = SettingsConfigDict(
