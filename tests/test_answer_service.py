@@ -51,6 +51,7 @@ def _rag_context() -> RagContext:
         source_locator={"page": 3},
         source_system="sharepoint",
         source_uri="https://example.test/procedura-magazynowa",
+        source_modified_at=None,
     )
 
     source = CitationSource(

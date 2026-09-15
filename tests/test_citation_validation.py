@@ -21,6 +21,7 @@ def _citation_source(label: str) -> CitationSource:
             source_locator=None,
             source_system=None,
             source_uri=None,
+            source_modified_at=None,
         ),
     )
 

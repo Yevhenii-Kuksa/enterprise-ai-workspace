@@ -1,5 +1,6 @@
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -25,6 +26,7 @@ class VectorSearchResult:
     source_locator: dict[str, object] | None
     source_system: str | None
     source_uri: str | None
+    source_modified_at: datetime | None
 
 
 def search_similar_chunks(
@@ -37,7 +39,7 @@ def search_similar_chunks(
 ) -> list[VectorSearchResult]:
     if limit <= 0:
         raise ValueError("Search limit must be greater than zero.")
-        
+
     if not current_user.is_active:
         raise PermissionError("Inactive user cannot perform vector search.")
 
@@ -62,6 +64,7 @@ def search_similar_chunks(
             DocumentChunk.source_locator,
             Document.source_system,
             DocumentVersion.source_uri,
+            DocumentVersion.source_modified_at,
         )
         .join(
             ChunkEmbedding,
@@ -103,6 +106,7 @@ def search_similar_chunks(
             source_locator=row.source_locator,
             source_system=row.source_system,
             source_uri=row.source_uri,
+            source_modified_at=row.source_modified_at,
         )
         for row in rows
     ]

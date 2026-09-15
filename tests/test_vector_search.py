@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 from app.db.session import SessionLocal
 from app.models.chunk_embedding import ChunkEmbedding
@@ -13,6 +14,15 @@ from sqlalchemy import delete
 
 
 def test_vector_search_ranks_isolates_and_returns_provenance() -> None:
+    source_modified_at = datetime(
+        2026,
+        9,
+        14,
+        12,
+        0,
+        tzinfo=UTC,
+    )
+
     organization_a_id = uuid.uuid4()
     organization_b_id = uuid.uuid4()
 
@@ -95,7 +105,10 @@ def test_vector_search_ranks_isolates_and_returns_provenance() -> None:
                     document_id=document_a_id,
                     version_number=1,
                     content_sha256="a" * 64,
-                    source_uri="https://example.test/procedura-magazynowa",
+                    source_uri=(
+                        "https://example.test/procedura-magazynowa"
+                    ),
+                    source_modified_at=source_modified_at,
                     ingestion_status="completed",
                 ),
                 DocumentVersion(
@@ -208,6 +221,7 @@ def test_vector_search_ranks_isolates_and_returns_provenance() -> None:
             first_result.source_uri
             == "https://example.test/procedura-magazynowa"
         )
+        assert first_result.source_modified_at == source_modified_at
 
         db.execute(
             delete(ChunkEmbedding).where(
@@ -297,6 +311,7 @@ def test_vector_search_rejects_non_positive_limit() -> None:
         else:
             raise AssertionError("Expected ValueError.")
 
+
 def test_vector_search_filters_documents_by_department_access() -> None:
     organization_id = uuid.uuid4()
     department_a_id = uuid.uuid4()
@@ -321,7 +336,9 @@ def test_vector_search_filters_documents_by_department_access() -> None:
     query_embedding = [1.0, 0.0, 0.0] + [0.0] * 1533
     public_embedding = [0.95, 0.05, 0.0] + [0.0] * 1533
     own_embedding = [0.90, 0.10, 0.0] + [0.0] * 1533
-    foreign_department_embedding = [1.0, 0.0, 0.0] + [0.0] * 1533
+    foreign_department_embedding = (
+        [1.0, 0.0, 0.0] + [0.0] * 1533
+    )
 
     current_user = CurrentUser(
         id=uuid.uuid4(),
@@ -549,6 +566,7 @@ def test_vector_search_filters_documents_by_department_access() -> None:
             )
         )
         db.commit()
+
 
 def test_vector_search_rejects_inactive_user() -> None:
     current_user = CurrentUser(

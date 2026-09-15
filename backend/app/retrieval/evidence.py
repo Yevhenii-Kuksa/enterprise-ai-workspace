@@ -1,5 +1,6 @@
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
 
 from app.retrieval.vector_search import VectorSearchResult
 
@@ -18,6 +19,8 @@ class EvidenceItem:
     source_locator: dict[str, object] | None
     source_system: str | None
     source_uri: str | None
+    source_modified_at: datetime | None
+
 
 @dataclass(frozen=True, slots=True)
 class CitationSource:
@@ -42,9 +45,11 @@ def build_evidence_items(
             source_locator=result.source_locator,
             source_system=result.source_system,
             source_uri=result.source_uri,
+            source_modified_at=result.source_modified_at,
         )
         for result in results
     ]
+
 
 def build_citation_sources(
     evidence: list[EvidenceItem],

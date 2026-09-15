@@ -27,6 +27,7 @@ def _evidence_item(
         source_locator=None,
         source_system=source_system,
         source_uri=source_uri,
+        source_modified_at=None,
     )
 
 

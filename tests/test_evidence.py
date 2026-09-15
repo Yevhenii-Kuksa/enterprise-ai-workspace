@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 from app.retrieval.evidence import (
     build_citation_sources,
@@ -15,6 +16,14 @@ def test_build_evidence_items_preserves_all_fields() -> None:
     chunk_id = uuid.uuid4()
     document_id = uuid.uuid4()
     document_version_id = uuid.uuid4()
+    source_modified_at = datetime(
+        2026,
+        9,
+        14,
+        12,
+        0,
+        tzinfo=UTC,
+    )
 
     results = [
         VectorSearchResult(
@@ -33,6 +42,7 @@ def test_build_evidence_items_preserves_all_fields() -> None:
             },
             source_system="sharepoint",
             source_uri="https://example.test/procedura-magazynowa",
+            source_modified_at=source_modified_at,
         )
     ]
 
@@ -60,6 +70,7 @@ def test_build_evidence_items_preserves_all_fields() -> None:
         item.source_uri
         == "https://example.test/procedura-magazynowa"
     )
+    assert item.source_modified_at == source_modified_at
 
 
 def test_build_evidence_items_preserves_result_order() -> None:
@@ -80,6 +91,7 @@ def test_build_evidence_items_preserves_result_order() -> None:
             source_locator=None,
             source_system=None,
             source_uri=None,
+            source_modified_at=None,
         ),
         VectorSearchResult(
             chunk_id=second_chunk_id,
@@ -94,6 +106,7 @@ def test_build_evidence_items_preserves_result_order() -> None:
             source_locator=None,
             source_system=None,
             source_uri=None,
+            source_modified_at=None,
         ),
     ]
 
@@ -125,6 +138,7 @@ def test_build_citation_sources_assigns_stable_labels() -> None:
                 source_locator=None,
                 source_system=None,
                 source_uri=None,
+                source_modified_at=None,
             ),
             VectorSearchResult(
                 chunk_id=uuid.uuid4(),
@@ -139,6 +153,7 @@ def test_build_citation_sources_assigns_stable_labels() -> None:
                 source_locator=None,
                 source_system=None,
                 source_uri=None,
+                source_modified_at=None,
             ),
         ]
     )
