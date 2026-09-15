@@ -8,7 +8,7 @@ from app.embeddings.persistence import persist_chunk_embedding
 from app.embeddings.provider import EmbeddingProvider
 from app.embeddings.service import generate_embeddings
 from app.ingestion.chunk_persistence import persist_document_chunks
-from app.ingestion.chunking import ChunkingConfig, chunk_text
+from app.ingestion.chunking import ChunkingConfig, TextChunk, chunk_text
 from app.ingestion.service import (
     IngestionRequest,
     persist_ingestion,
@@ -82,41 +82,18 @@ def resolve_text_ingestion(
     )
 
 
-def ingest_text_document(
+def _persist_chunks_and_embeddings(
     session: Session,
-    request: TextIngestionRequest,
     *,
-    embedding_provider: EmbeddingProvider | None = None,
-    chunking_config: ChunkingConfig | None = None,
-) -> TextIngestionResult:
-    duplicate_result = resolve_text_ingestion(
-        session,
-        request,
-    )
-
-    if duplicate_result is not None:
-        return duplicate_result
-
-    ingestion_request = to_ingestion_request(request)
-    persisted = persist_ingestion(
-        session,
-        ingestion_request,
-    )
-
-    if persisted.document_version_id is None:
-        raise RuntimeError(
-            "Expected a document version for non-duplicate ingestion."
-        )
-
-    chunks = chunk_text(
-        request.text,
-        config=chunking_config,
-    )
-
+    request: TextIngestionRequest,
+    document_version_id: uuid.UUID,
+    chunks: list[TextChunk],
+    embedding_provider: EmbeddingProvider | None,
+) -> tuple[int, int]:
     persisted_chunks = persist_document_chunks(
         session,
         organization_id=request.organization_id,
-        document_version_id=persisted.document_version_id,
+        document_version_id=document_version_id,
         chunks=chunks,
     )
 
@@ -148,12 +125,69 @@ def ingest_text_document(
             if persisted_embedding.created:
                 embeddings_created += 1
 
+    return len(persisted_chunks), embeddings_created
+
+
+def ingest_prepared_chunks(
+    session: Session,
+    request: TextIngestionRequest,
+    *,
+    chunks: list[TextChunk],
+    embedding_provider: EmbeddingProvider | None = None,
+) -> TextIngestionResult:
+    duplicate_result = resolve_text_ingestion(
+        session,
+        request,
+    )
+
+    if duplicate_result is not None:
+        return duplicate_result
+
+    ingestion_request = to_ingestion_request(request)
+    persisted = persist_ingestion(
+        session,
+        ingestion_request,
+    )
+
+    if persisted.document_version_id is None:
+        raise RuntimeError(
+            "Expected a document version for non-duplicate ingestion."
+        )
+
+    chunks_created, embeddings_created = _persist_chunks_and_embeddings(
+        session,
+        request=request,
+        document_version_id=persisted.document_version_id,
+        chunks=chunks,
+        embedding_provider=embedding_provider,
+    )
+
     return TextIngestionResult(
         document_id=persisted.document_id,
         document_version_id=persisted.document_version_id,
         version_number=persisted.version_number,
         created_document=persisted.created_document,
         created_version=persisted.created_version,
-        chunks_created=len(persisted_chunks),
+        chunks_created=chunks_created,
         embeddings_created=embeddings_created,
+    )
+
+
+def ingest_text_document(
+    session: Session,
+    request: TextIngestionRequest,
+    *,
+    embedding_provider: EmbeddingProvider | None = None,
+    chunking_config: ChunkingConfig | None = None,
+) -> TextIngestionResult:
+    chunks = chunk_text(
+        request.text,
+        config=chunking_config,
+    )
+
+    return ingest_prepared_chunks(
+        session,
+        request,
+        chunks=chunks,
+        embedding_provider=embedding_provider,
     )
