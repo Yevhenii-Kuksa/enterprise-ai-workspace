@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     ai_answer_provider: Literal["openai"] = "openai"
     ai_answer_model: str = "gpt-5.6-luna"
 
+    ai_reliability_max_evidence_distance: float = 0.35
+    ai_reliability_max_source_age_days: int = 30
+
     openai_api_key: SecretStr | None = None
 
     model_config = SettingsConfigDict(

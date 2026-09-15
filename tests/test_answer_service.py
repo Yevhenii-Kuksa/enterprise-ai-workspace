@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 
 from app.ai.answer_service import (
     SYSTEM_PROMPT,
@@ -173,6 +174,125 @@ def test_generate_grounded_answer_rejects_empty_evidence() -> None:
     except ValueError as exc:
         assert str(exc) == (
             "Cannot generate a grounded answer without evidence."
+        )
+    else:
+        raise AssertionError("Expected ValueError.")
+
+    assert provider.calls == []
+
+def test_generate_grounded_answer_allows_reliable_context() -> None:
+    provider = FakeAIAnswerProvider()
+    context = _rag_context()
+
+    result = generate_grounded_answer(
+        provider=provider,
+        context=context,
+        evaluated_at=datetime(
+            2026,
+            9,
+            15,
+            12,
+            0,
+            tzinfo=UTC,
+        ),
+        max_evidence_distance=0.35,
+        max_source_age=timedelta(days=30),
+        conflict_checked=True,
+    )
+
+    assert result.reliability is not None
+    assert result.reliability_policy is not None
+    assert result.reliability_policy.decision.value == "degrade"
+    assert result.reliability_policy.reasons == (
+        "unknown_source_freshness",
+    )
+    assert len(provider.calls) == 1
+
+
+def test_generate_grounded_answer_refuses_insufficient_evidence() -> None:
+    provider = FakeAIAnswerProvider()
+    context = _rag_context()
+
+    try:
+        generate_grounded_answer(
+            provider=provider,
+            context=context,
+            evaluated_at=datetime(
+                2026,
+                9,
+                15,
+                12,
+                0,
+                tzinfo=UTC,
+            ),
+            max_evidence_distance=0.05,
+            max_source_age=timedelta(days=30),
+            conflict_checked=True,
+        )
+    except ValueError as exc:
+        assert str(exc) == (
+            "Reliability policy refused answer generation: "
+            "insufficient_evidence"
+        )
+    else:
+        raise AssertionError("Expected ValueError.")
+
+    assert provider.calls == []
+
+
+def test_generate_grounded_answer_refuses_detected_conflict() -> None:
+    provider = FakeAIAnswerProvider()
+    context = _rag_context()
+
+    try:
+        generate_grounded_answer(
+            provider=provider,
+            context=context,
+            evaluated_at=datetime(
+                2026,
+                9,
+                15,
+                12,
+                0,
+                tzinfo=UTC,
+            ),
+            max_evidence_distance=0.35,
+            max_source_age=timedelta(days=30),
+            conflict_count=1,
+            conflict_checked=True,
+        )
+    except ValueError as exc:
+        assert str(exc) == (
+            "Reliability policy refused answer generation: "
+            "conflict_detected"
+        )
+    else:
+        raise AssertionError("Expected ValueError.")
+
+    assert provider.calls == []
+
+
+def test_generate_grounded_answer_requires_complete_reliability_config() -> None:
+    provider = FakeAIAnswerProvider()
+    context = _rag_context()
+
+    try:
+        generate_grounded_answer(
+            provider=provider,
+            context=context,
+            evaluated_at=datetime(
+                2026,
+                9,
+                15,
+                12,
+                0,
+                tzinfo=UTC,
+            ),
+        )
+    except ValueError as exc:
+        assert str(exc) == (
+            "Reliability evaluation requires evaluated_at, "
+            "max_evidence_distance, and max_source_age."
         )
     else:
         raise AssertionError("Expected ValueError.")
