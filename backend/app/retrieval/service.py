@@ -1,7 +1,10 @@
+import logging
 from dataclasses import dataclass
+from time import perf_counter
 
 from sqlalchemy.orm import Session
 
+from app.core.trace_context import TraceContext
 from app.embeddings.provider import EmbeddingProvider
 from app.embeddings.service import generate_embeddings
 from app.retrieval.context import RagContext, build_rag_context
@@ -14,6 +17,8 @@ from app.retrieval.vector_search import (
     search_similar_chunks,
 )
 from app.security.current_user import CurrentUser
+
+logger = logging.getLogger("enterprise_ai_workspace.retrieval")
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,11 +34,14 @@ def retrieve_evidence(
     query: str,
     embedding_provider: EmbeddingProvider,
     limit: int = 10,
+    trace_context: TraceContext | None = None,
 ) -> RetrievalResult:
     normalized_query = query.strip()
 
     if not normalized_query:
         raise ValueError("Query must not be empty.")
+
+    started_at = perf_counter()
 
     query_embeddings = generate_embeddings(
         embedding_provider,
@@ -53,6 +61,38 @@ def retrieve_evidence(
         limit=limit,
     )
 
+    duration_ms = (perf_counter() - started_at) * 1000
+
+    if trace_context is not None:
+        best_distance = (
+            min(item.distance for item in evidence)
+            if evidence
+            else None
+        )
+
+        logger.info(
+            "Retrieval completed.",
+            extra={
+                "trace_id": str(trace_context.trace_id),
+                "request_id": str(trace_context.request_id),
+                "action_id": (
+                    str(trace_context.action_id)
+                    if trace_context.action_id is not None
+                    else None
+                ),
+                "event_type": "retrieval_completed",
+                "organization_id": str(
+                    current_user.organization_id
+                ),
+                "user_id": str(current_user.id),
+                "embedding_model": query_embedding.model_name,
+                "requested_limit": limit,
+                "evidence_count": len(evidence),
+                "best_distance": best_distance,
+                "duration_ms": duration_ms,
+            },
+        )
+
     return RetrievalResult(
         query=normalized_query,
         evidence=evidence,
@@ -66,6 +106,7 @@ def prepare_rag_context(
     query: str,
     embedding_provider: EmbeddingProvider,
     limit: int = 10,
+    trace_context: TraceContext | None = None,
 ) -> RagContext:
     retrieval_result = retrieve_evidence(
         session,
@@ -73,6 +114,7 @@ def prepare_rag_context(
         query=query,
         embedding_provider=embedding_provider,
         limit=limit,
+        trace_context=trace_context,
     )
 
     evidence_items = build_evidence_items(

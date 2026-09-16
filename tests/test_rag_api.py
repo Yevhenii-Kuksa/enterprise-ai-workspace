@@ -229,3 +229,44 @@ def test_rag_query_rejects_empty_query() -> None:
         app.dependency_overrides.clear()
 
     assert response.status_code == 422
+
+def test_rag_query_passes_trace_context_to_service() -> None:
+    app.dependency_overrides[get_db] = _override_db
+    app.dependency_overrides[get_current_user] = _current_user
+    app.dependency_overrides[get_settings] = _override_settings
+
+    trace_id = uuid.uuid4()
+
+    try:
+        with patch(
+            "app.api.rag.answer_rag_query_from_settings",
+            return_value=_rag_result(),
+        ) as mocked_answer:
+            client = TestClient(app)
+
+            response = client.post(
+                "/api/rag/query",
+                json={
+                    "query": "Jak przyjąć towar?",
+                },
+                headers={
+                    "X-Trace-ID": str(trace_id),
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+
+    mocked_answer.assert_called_once()
+
+    call_kwargs = mocked_answer.call_args.kwargs
+
+    trace_context = call_kwargs["trace_context"]
+
+    assert trace_context.trace_id == trace_id
+    assert (
+        str(trace_context.request_id)
+        == response.headers["X-Request-ID"]
+    )
+    assert trace_context.action_id is None

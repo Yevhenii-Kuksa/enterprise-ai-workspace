@@ -1,5 +1,6 @@
 import uuid
 
+from app.core.trace_context import TraceContext
 from app.db.session import SessionLocal
 from app.models.chunk_embedding import ChunkEmbedding
 from app.models.department import Department
@@ -423,3 +424,56 @@ def test_prepare_rag_context_builds_citation_ready_context() -> None:
         ]
 
         db.rollback()
+
+def test_retrieve_evidence_emits_correlated_trace(
+    caplog,
+) -> None:
+    provider = FakeEmbeddingProvider()
+    current_user = CurrentUser(
+        id=uuid.uuid4(),
+        organization_id=uuid.uuid4(),
+        department_id=None,
+        is_active=True,
+        permissions=set(),
+    )
+
+    trace_context = TraceContext.create()
+
+    with SessionLocal() as db:
+        with caplog.at_level(
+            "INFO",
+            logger="enterprise_ai_workspace.retrieval",
+        ):
+            result = retrieve_evidence(
+                db,
+                current_user=current_user,
+                query="Where is the warehouse procedure?",
+                embedding_provider=provider,
+                limit=5,
+                trace_context=trace_context,
+            )
+
+    assert result.evidence == []
+
+    matching_records = [
+        record
+        for record in caplog.records
+        if getattr(record, "event_type", None)
+        == "retrieval_completed"
+    ]
+
+    assert len(matching_records) == 1
+
+    record = matching_records[0]
+
+    assert record.trace_id == str(trace_context.trace_id)
+    assert record.request_id == str(trace_context.request_id)
+    assert record.action_id is None
+    assert record.organization_id == str(current_user.organization_id)
+    assert record.user_id == str(current_user.id)
+    assert record.embedding_model == "fake-model"
+    assert record.requested_limit == 5
+    assert record.evidence_count == 0
+    assert record.best_distance is None
+    assert isinstance(record.duration_ms, float)
+    assert record.duration_ms >= 0        

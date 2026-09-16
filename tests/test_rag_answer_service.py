@@ -9,6 +9,7 @@ from app.ai.rag_service import (
 )
 from app.ai.reliability.policy import ReliabilityDecision
 from app.core.config import Settings
+from app.core.trace_context import TraceContext
 from app.retrieval.context import RagContext
 from app.retrieval.evidence import CitationSource, EvidenceItem
 from app.security.current_user import CurrentUser
@@ -242,3 +243,35 @@ def test_answer_rag_query_from_settings_uses_runtime_config() -> None:
         is ReliabilityDecision.ALLOW
     )
     assert len(ai_provider.calls) == 1
+
+def test_answer_rag_query_passes_trace_context_to_retrieval() -> None:
+    context = _rag_context()
+    trace_context = TraceContext.create()
+
+    with patch(
+        "app.ai.rag_service.prepare_rag_context",
+        return_value=context,
+    ) as prepare_context:
+        answer_rag_query(
+            session=None,  # type: ignore[arg-type]
+            current_user=_current_user(),
+            query="Jaka jest procedura magazynowa?",
+            embedding_provider=FakeEmbeddingProvider(),
+            ai_answer_provider=FakeAIAnswerProvider(),
+            evaluated_at=datetime(
+                2026,
+                9,
+                15,
+                12,
+                0,
+                tzinfo=UTC,
+            ),
+            max_evidence_distance=0.35,
+            max_source_age=timedelta(days=30),
+            conflict_checked=True,
+            trace_context=trace_context,
+        )
+
+    call_kwargs = prepare_context.call_args.kwargs
+
+    assert call_kwargs["trace_context"] is trace_context

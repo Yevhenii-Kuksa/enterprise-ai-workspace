@@ -7,6 +7,7 @@ from app.ai.answer_service import GeneratedAnswer, generate_grounded_answer
 from app.ai.factory import create_ai_answer_provider
 from app.ai.provider import AIAnswerProvider
 from app.core.config import Settings
+from app.core.trace_context import TraceContext
 from app.embeddings.factory import create_embedding_provider
 from app.embeddings.provider import EmbeddingProvider
 from app.retrieval.context import RagContext
@@ -33,6 +34,7 @@ def answer_rag_query(
     retrieval_limit: int = 10,
     conflict_count: int = 0,
     conflict_checked: bool = False,
+    trace_context: TraceContext | None = None,
 ) -> RagAnswerResult:
     context = prepare_rag_context(
         session,
@@ -40,6 +42,7 @@ def answer_rag_query(
         query=query,
         embedding_provider=embedding_provider,
         limit=retrieval_limit,
+        trace_context=trace_context,
     )
 
     answer = generate_grounded_answer(
@@ -57,6 +60,7 @@ def answer_rag_query(
         answer=answer,
     )
 
+
 def answer_rag_query_from_settings(
     session: Session,
     *,
@@ -67,6 +71,7 @@ def answer_rag_query_from_settings(
     conflict_count: int = 0,
     conflict_checked: bool = False,
     evaluated_at: datetime | None = None,
+    trace_context: TraceContext | None = None,
 ) -> RagAnswerResult:
     embedding_provider = create_embedding_provider(settings)
     ai_answer_provider = create_ai_answer_provider(settings)
@@ -93,4 +98,5 @@ def answer_rag_query_from_settings(
         retrieval_limit=retrieval_limit,
         conflict_count=conflict_count,
         conflict_checked=conflict_checked,
+        trace_context=trace_context,
     )
