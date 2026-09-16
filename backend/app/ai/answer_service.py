@@ -111,6 +111,16 @@ def generate_grounded_answer(
         context=context,
     )
 
+    if citation_validation.invalid_citation_count > 0:
+        raise ValueError(
+            "Generated answer contains invalid citations."
+        )
+
+    if citation_validation.citation_count == 0:
+        raise ValueError(
+            "Generated answer does not contain citations."
+        )
+
     return GeneratedAnswer(
         text=result.text,
         model_name=result.model_name,

@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from datetime import UTC, datetime, timedelta
 
 from app.ai.answer_service import (
@@ -33,7 +33,7 @@ class FakeAIAnswerProvider:
         )
 
         return AIAnswerResult(
-            text="Towar należy przyjąć zgodnie z procedurą [S1].",
+            text="Towar naleЕјy przyjД…Д‡ zgodnie z procedurД… [S1].",
             model_name=self.model_name,
         )
 
@@ -44,11 +44,11 @@ def _rag_context() -> RagContext:
         document_id=uuid.uuid4(),
         document_version_id=uuid.uuid4(),
         document_title="Procedura magazynowa",
-        content="Towar należy przyjąć zgodnie z procedurą.",
+        content="Towar naleЕјy przyjД…Д‡ zgodnie z procedurД….",
         chunk_index=0,
         distance=0.1,
         page_number=3,
-        section_title="Przyjęcie towaru",
+        section_title="PrzyjД™cie towaru",
         source_locator={"page": 3},
         source_system="sharepoint",
         source_uri="https://example.test/procedura-magazynowa",
@@ -61,12 +61,12 @@ def _rag_context() -> RagContext:
     )
 
     return RagContext(
-        query="Jak przyjąć towar?",
+        query="Jak przyjД…Д‡ towar?",
         sources=[source],
         context_text=(
             "[S1]\n"
             "Document: Procedura magazynowa\n"
-            "Content: Towar należy przyjąć zgodnie z procedurą."
+            "Content: Towar naleЕјy przyjД…Д‡ zgodnie z procedurД…."
         ),
     )
 
@@ -76,11 +76,11 @@ def test_build_user_prompt_includes_question_and_context() -> None:
 
     prompt = build_user_prompt(context)
 
-    assert "Question:\nJak przyjąć towar?" in prompt
+    assert "Question:\nJak przyjД…Д‡ towar?" in prompt
     assert "[S1]" in prompt
     assert "Document: Procedura magazynowa" in prompt
     assert (
-        "Content: Towar należy przyjąć zgodnie z procedurą."
+        "Content: Towar naleЕјy przyjД…Д‡ zgodnie z procedurД…."
         in prompt
     )
 
@@ -102,7 +102,7 @@ def test_generate_grounded_answer_uses_system_prompt_and_user_prompt() -> None:
     ]
 
     assert result.text == (
-        "Towar należy przyjąć zgodnie z procedurą [S1]."
+        "Towar naleЕјy przyjД…Д‡ zgodnie z procedurД… [S1]."
     )
     assert result.model_name == "fake-answer-model"
 
@@ -115,14 +115,14 @@ def test_generate_grounded_answer_uses_system_prompt_and_user_prompt() -> None:
 
 def test_build_user_prompt_handles_empty_context_text() -> None:
     context = RagContext(
-        query="Pytanie bez źródeł",
+        query="Pytanie bez ЕєrГіdeЕ‚",
         sources=[],
         context_text="",
     )
 
     prompt = build_user_prompt(context)
 
-    assert "Question:\nPytanie bez źródeł" in prompt
+    assert "Question:\nPytanie bez ЕєrГіdeЕ‚" in prompt
     assert "Context:\n" in prompt
 
 class InvalidCitationAIAnswerProvider:
@@ -137,31 +137,15 @@ class InvalidCitationAIAnswerProvider:
         user_prompt: str,
     ) -> AIAnswerResult:
         return AIAnswerResult(
-            text="Niepotwierdzona odpowiedź [S99].",
+            text="Niepotwierdzona odpowiedЕє [S99].",
             model_name=self.model_name,
         )
-
-
-def test_generate_grounded_answer_detects_invalid_citation() -> None:
-    provider = InvalidCitationAIAnswerProvider()
-    context = _rag_context()
-
-    result = generate_grounded_answer(
-        provider=provider,
-        context=context,
-    )
-
-    assert result.citation_validation.used_labels == {"S99"}
-    assert result.citation_validation.valid_labels == set()
-    assert result.citation_validation.invalid_labels == {"S99"}
-    assert result.citation_validation.citation_count == 1
-    assert result.citation_validation.invalid_citation_count == 1
 
 def test_generate_grounded_answer_rejects_empty_evidence() -> None:
     provider = FakeAIAnswerProvider()
 
     context = RagContext(
-        query="Pytanie bez źródeł",
+        query="Pytanie bez ЕєrГіdeЕ‚",
         sources=[],
         context_text="",
     )
@@ -298,3 +282,53 @@ def test_generate_grounded_answer_requires_complete_reliability_config() -> None
         raise AssertionError("Expected ValueError.")
 
     assert provider.calls == []
+
+class MissingCitationAIAnswerProvider:
+    @property
+    def model_name(self) -> str:
+        return "fake-missing-citation-model"
+
+    def generate_answer(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> AIAnswerResult:
+        return AIAnswerResult(
+            text="Answer without a source citation.",
+            model_name=self.model_name,
+        )
+
+
+def test_generate_grounded_answer_rejects_invalid_citation() -> None:
+    provider = InvalidCitationAIAnswerProvider()
+    context = _rag_context()
+
+    try:
+        generate_grounded_answer(
+            provider=provider,
+            context=context,
+        )
+    except ValueError as exc:
+        assert str(exc) == (
+            "Generated answer contains invalid citations."
+        )
+    else:
+        raise AssertionError("Expected ValueError.")
+
+
+def test_generate_grounded_answer_rejects_missing_citations() -> None:
+    provider = MissingCitationAIAnswerProvider()
+    context = _rag_context()
+
+    try:
+        generate_grounded_answer(
+            provider=provider,
+            context=context,
+        )
+    except ValueError as exc:
+        assert str(exc) == (
+            "Generated answer does not contain citations."
+        )
+    else:
+        raise AssertionError("Expected ValueError.")
