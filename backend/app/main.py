@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.knowledge import router as knowledge_router
 from app.api.rag import router as rag_router
 
 app = FastAPI(
@@ -9,6 +10,7 @@ app = FastAPI(
 )
 
 app.include_router(rag_router)
+app.include_router(knowledge_router)
 
 
 @app.get("/health", tags=["System"])
