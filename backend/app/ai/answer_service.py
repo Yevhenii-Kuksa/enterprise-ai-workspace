@@ -1,5 +1,7 @@
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from time import perf_counter
 
 from app.ai.citation_validation import (
     CitationValidationResult,
@@ -15,7 +17,10 @@ from app.ai.reliability.service import (
     ReliabilityResult,
     evaluate_reliability,
 )
+from app.core.trace_context import TraceContext
 from app.retrieval.context import RagContext
+
+logger = logging.getLogger("enterprise_ai_workspace.ai")
 
 SYSTEM_PROMPT = (
     "You are an enterprise AI assistant. "
@@ -53,6 +58,7 @@ def generate_grounded_answer(
     max_source_age: timedelta | None = None,
     conflict_count: int = 0,
     conflict_checked: bool = False,
+    trace_context: TraceContext | None = None,
 ) -> GeneratedAnswer:
     if not context.sources:
         raise ValueError(
@@ -101,15 +107,48 @@ def generate_grounded_answer(
                 + ", ".join(reliability_policy.reasons)
             )
 
+    started_at = perf_counter()
+
     result = provider.generate_answer(
         system_prompt=SYSTEM_PROMPT,
         user_prompt=build_user_prompt(context),
     )
 
+    duration_ms = (perf_counter() - started_at) * 1000
+
     citation_validation = validate_answer_citations(
         answer_text=result.text,
         context=context,
     )
+
+    if trace_context is not None:
+        logger.info(
+            "AI generation completed.",
+            extra={
+                "trace_id": str(trace_context.trace_id),
+                "request_id": str(trace_context.request_id),
+                "action_id": (
+                    str(trace_context.action_id)
+                    if trace_context.action_id is not None
+                    else None
+                ),
+                "event_type": "ai_generation_completed",
+                "model_name": result.model_name,
+                "evidence_count": len(context.sources),
+                "citation_count": (
+                    citation_validation.citation_count
+                ),
+                "invalid_citation_count": (
+                    citation_validation.invalid_citation_count
+                ),
+                "reliability_decision": (
+                    reliability_policy.decision.value
+                    if reliability_policy is not None
+                    else None
+                ),
+                "duration_ms": duration_ms,
+            },
+        )
 
     if citation_validation.invalid_citation_count > 0:
         raise ValueError(

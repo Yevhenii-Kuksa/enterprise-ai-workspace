@@ -7,6 +7,7 @@ from app.ai.answer_service import (
     generate_grounded_answer,
 )
 from app.ai.provider import AIAnswerResult
+from app.core.trace_context import TraceContext
 from app.retrieval.context import RagContext
 from app.retrieval.evidence import CitationSource, EvidenceItem
 
@@ -332,3 +333,55 @@ def test_generate_grounded_answer_rejects_missing_citations() -> None:
         )
     else:
         raise AssertionError("Expected ValueError.")
+
+def test_generate_grounded_answer_emits_correlated_ai_trace(
+    caplog,
+) -> None:
+    provider = FakeAIAnswerProvider()
+    context = _rag_context()
+    trace_context = TraceContext.create()
+
+    with caplog.at_level(
+        "INFO",
+        logger="enterprise_ai_workspace.ai",
+    ):
+        result = generate_grounded_answer(
+            provider=provider,
+            context=context,
+            evaluated_at=datetime(
+                2026,
+                9,
+                15,
+                12,
+                0,
+                tzinfo=UTC,
+            ),
+            max_evidence_distance=0.35,
+            max_source_age=timedelta(days=30),
+            conflict_checked=True,
+            trace_context=trace_context,
+        )
+
+    matching_records = [
+        record
+        for record in caplog.records
+        if getattr(record, "event_type", None)
+        == "ai_generation_completed"
+    ]
+
+    assert len(matching_records) == 1
+
+    record = matching_records[0]
+
+    assert record.trace_id == str(trace_context.trace_id)
+    assert record.request_id == str(trace_context.request_id)
+    assert record.action_id is None
+    assert record.model_name == "fake-answer-model"
+    assert record.evidence_count == 1
+    assert record.citation_count == 1
+    assert record.invalid_citation_count == 0
+    assert record.reliability_decision == "degrade"
+    assert isinstance(record.duration_ms, float)
+    assert record.duration_ms >= 0
+
+    assert result.model_name == "fake-answer-model"

@@ -275,3 +275,42 @@ def test_answer_rag_query_passes_trace_context_to_retrieval() -> None:
     call_kwargs = prepare_context.call_args.kwargs
 
     assert call_kwargs["trace_context"] is trace_context
+
+def test_answer_rag_query_passes_trace_context_to_ai_generation() -> None:
+    context = _rag_context()
+    trace_context = TraceContext.create()
+
+    with (
+        patch(
+            "app.ai.rag_service.prepare_rag_context",
+            return_value=context,
+        ),
+        patch(
+            "app.ai.rag_service.generate_grounded_answer",
+        ) as generate_answer,
+    ):
+        answer_rag_query(
+            session=None,  # type: ignore[arg-type]
+            current_user=_current_user(),
+            query="Jaka jest procedura magazynowa?",
+            embedding_provider=FakeEmbeddingProvider(),
+            ai_answer_provider=FakeAIAnswerProvider(),
+            evaluated_at=datetime(
+                2026,
+                9,
+                15,
+                12,
+                0,
+                tzinfo=UTC,
+            ),
+            max_evidence_distance=0.35,
+            max_source_age=timedelta(days=30),
+            conflict_checked=True,
+            trace_context=trace_context,
+        )
+
+    generate_answer.assert_called_once()
+
+    call_kwargs = generate_answer.call_args.kwargs
+
+    assert call_kwargs["trace_context"] is trace_context

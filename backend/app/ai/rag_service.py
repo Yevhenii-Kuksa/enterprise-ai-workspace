@@ -53,7 +53,8 @@ def answer_rag_query(
         max_source_age=max_source_age,
         conflict_count=conflict_count,
         conflict_checked=conflict_checked,
-    )
+        trace_context=trace_context,
+)
 
     return RagAnswerResult(
         context=context,
