@@ -439,3 +439,44 @@ def test_generate_grounded_answer_emits_ai_failure_trace(
     assert record.error_category == "ai_provider"
     assert isinstance(record.duration_ms, float)
     assert record.duration_ms >= 0
+
+def test_generate_grounded_answer_emits_reliability_trace(
+    caplog,
+) -> None:
+    provider = FakeAIAnswerProvider()
+    context = _rag_context()
+    trace_context = TraceContext.create()
+
+    with caplog.at_level(
+        "INFO",
+        logger="enterprise_ai_workspace.ai",
+    ):
+        generate_grounded_answer(
+            provider=provider,
+            context=context,
+            evaluated_at=datetime.now(UTC),
+            max_evidence_distance=1.0,
+            max_source_age=timedelta(days=365),
+            conflict_count=0,
+            conflict_checked=True,
+            trace_context=trace_context,
+        )
+
+    matching_records = [
+        record
+        for record in caplog.records
+        if getattr(record, "event_type", None)
+        == "reliability_evaluated"
+    ]
+
+    assert len(matching_records) == 1
+
+    record = matching_records[0]
+
+    assert record.trace_id == str(trace_context.trace_id)
+    assert record.request_id == str(trace_context.request_id)
+    assert record.action_id is None
+    assert record.reliability_decision == "degrade"
+    assert record.reliability_reasons == (
+        "unknown_source_freshness",
+    )

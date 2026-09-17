@@ -102,6 +102,27 @@ def generate_grounded_answer(
             reliability
         )
 
+        if trace_context is not None:
+            logger.info(
+                "Reliability evaluated.",
+                extra={
+                    "trace_id": str(trace_context.trace_id),
+                    "request_id": str(trace_context.request_id),
+                    "action_id": (
+                        str(trace_context.action_id)
+                        if trace_context.action_id is not None
+                        else None
+                    ),
+                    "event_type": "reliability_evaluated",
+                    "reliability_decision": (
+                        reliability_policy.decision.value
+                    ),
+                    "reliability_reasons": (
+                        reliability_policy.reasons
+                    ),
+                },
+            )
+
         if reliability_policy.decision is ReliabilityDecision.REFUSE:
             raise ValueError(
                 "Reliability policy refused answer generation: "

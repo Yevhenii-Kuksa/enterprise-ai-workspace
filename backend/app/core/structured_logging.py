@@ -19,6 +19,7 @@ TELEMETRY_FIELDS = (
     "citation_count",
     "invalid_citation_count",
     "reliability_decision",
+    "reliability_reasons",
 )
 
 

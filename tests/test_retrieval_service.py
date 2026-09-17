@@ -476,4 +476,145 @@ def test_retrieve_evidence_emits_correlated_trace(
     assert record.evidence_count == 0
     assert record.best_distance is None
     assert isinstance(record.duration_ms, float)
+    assert record.duration_ms >= 0
+
+class FailingEmbeddingProvider:
+    @property
+    def model_name(self) -> str:
+        return "fake-failing-model"
+
+    @property
+    def dimensions(self) -> int:
+        return 1536
+
+    def embed_texts(
+        self,
+        texts: list[str],
+    ) -> list[list[float]]:
+        raise ConnectionError(
+            "Synthetic embedding provider failure."
+        )
+
+
+def test_retrieve_evidence_emits_embedding_failure_trace(
+    caplog,
+) -> None:
+    provider = FailingEmbeddingProvider()
+
+    current_user = CurrentUser(
+        id=uuid.uuid4(),
+        organization_id=uuid.uuid4(),
+        department_id=None,
+        is_active=True,
+        permissions=set(),
+    )
+
+    trace_context = TraceContext.create()
+
+    with SessionLocal() as db:
+        with caplog.at_level(
+            "ERROR",
+            logger="enterprise_ai_workspace.retrieval",
+        ):
+            try:
+                retrieve_evidence(
+                    db,
+                    current_user=current_user,
+                    query="Where is the warehouse procedure?",
+                    embedding_provider=provider,
+                    limit=5,
+                    trace_context=trace_context,
+                )
+            except ConnectionError:
+                pass
+
+    matching_records = [
+        record
+        for record in caplog.records
+        if getattr(record, "event_type", None)
+        == "retrieval_failed"
+    ]
+
+    assert len(matching_records) == 1
+
+    record = matching_records[0]
+
+    assert record.trace_id == str(trace_context.trace_id)
+    assert record.request_id == str(trace_context.request_id)
+    assert record.action_id is None
+    assert record.organization_id == str(
+        current_user.organization_id
+    )
+    assert record.user_id == str(current_user.id)
+    assert record.requested_limit == 5
+    assert record.error_type == "ConnectionError"
+    assert record.error_category == "dependency"
+    assert isinstance(record.duration_ms, float)
+    assert record.duration_ms >= 0
+
+def test_retrieve_evidence_emits_database_failure_trace(
+    caplog,
+    monkeypatch,
+) -> None:
+    provider = FakeEmbeddingProvider()
+
+    current_user = CurrentUser(
+        id=uuid.uuid4(),
+        organization_id=uuid.uuid4(),
+        department_id=None,
+        is_active=True,
+        permissions=set(),
+    )
+
+    trace_context = TraceContext.create()
+
+    def fail_vector_search(*args, **kwargs):
+        raise RuntimeError(
+            "Synthetic database failure."
+        )
+
+    monkeypatch.setattr(
+        "app.retrieval.service.search_similar_chunks",
+        fail_vector_search,
+    )
+
+    with SessionLocal() as db:
+        with caplog.at_level(
+            "ERROR",
+            logger="enterprise_ai_workspace.retrieval",
+        ):
+            try:
+                retrieve_evidence(
+                    db,
+                    current_user=current_user,
+                    query="Where is the warehouse procedure?",
+                    embedding_provider=provider,
+                    limit=5,
+                    trace_context=trace_context,
+                )
+            except RuntimeError:
+                pass
+
+    matching_records = [
+        record
+        for record in caplog.records
+        if getattr(record, "event_type", None)
+        == "retrieval_failed"
+    ]
+
+    assert len(matching_records) == 1
+
+    record = matching_records[0]
+
+    assert record.trace_id == str(trace_context.trace_id)
+    assert record.request_id == str(trace_context.request_id)
+    assert record.action_id is None
+    assert record.organization_id == str(
+        current_user.organization_id
+    )
+    assert record.user_id == str(current_user.id)
+    assert record.requested_limit == 5
+    assert record.error_type == "RuntimeError"
+    assert record.error_category == "database"
+    assert isinstance(record.duration_ms, float)
     assert record.duration_ms >= 0        
