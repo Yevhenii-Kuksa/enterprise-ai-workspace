@@ -2,6 +2,24 @@ import json
 import logging
 from datetime import UTC, datetime
 
+TELEMETRY_FIELDS = (
+    "method",
+    "path",
+    "status_code",
+    "error_type",
+    "duration_ms",
+    "organization_id",
+    "user_id",
+    "embedding_model",
+    "requested_limit",
+    "evidence_count",
+    "best_distance",
+    "model_name",
+    "citation_count",
+    "invalid_citation_count",
+    "reliability_decision",
+)
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -15,6 +33,10 @@ class JsonFormatter(logging.Formatter):
             "action_id": getattr(record, "action_id", None),
             "event_type": getattr(record, "event_type", None),
         }
+
+        for field_name in TELEMETRY_FIELDS:
+            if hasattr(record, field_name):
+                payload[field_name] = getattr(record, field_name)
 
         return json.dumps(
             payload,
