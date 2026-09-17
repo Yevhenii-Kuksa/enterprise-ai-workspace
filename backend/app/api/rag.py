@@ -8,6 +8,7 @@ from app.api.schemas import (
     RagQueryResponse,
     RagReliabilityResponse,
 )
+from app.audit.service import record_audit_event
 from app.core.config import Settings, get_settings
 from app.core.trace_context import TraceContext
 from app.core.trace_dependencies import get_trace_context
@@ -64,6 +65,23 @@ def query_rag(
         raise RuntimeError(
             "RAG answer is missing reliability policy metadata."
         )
+
+    record_audit_event(
+        db,
+        current_user=current_user,
+        trace_context=trace_context,
+        event_type="rag_query",
+        resource_type="rag",
+        metadata={
+            "model_name": result.answer.model_name,
+            "evidence_count": len(result.context.sources),
+            "citation_count": len(result.context.sources),
+            "reliability_decision": policy.decision.value,
+            "reliability_reasons": list(policy.reasons),
+        },
+    )
+
+    db.commit()
 
     citations = [
         RagCitationResponse(

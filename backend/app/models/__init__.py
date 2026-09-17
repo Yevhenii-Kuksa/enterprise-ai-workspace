@@ -1,3 +1,4 @@
+from app.models.audit_event import AuditEvent
 from app.models.chunk_embedding import ChunkEmbedding
 from app.models.department import Department
 from app.models.document import Document
@@ -11,6 +12,7 @@ from app.models.user import User
 from app.models.user_role import user_roles
 
 __all__ = [
+    "AuditEvent",
     "ChunkEmbedding",
     "DocumentChunk",
     "Department",

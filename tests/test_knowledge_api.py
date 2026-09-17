@@ -9,6 +9,7 @@ from app.knowledge.service import (
     KnowledgeDocumentVersion,
 )
 from app.main import app
+from app.models.audit_event import AuditEvent
 from app.security.current_user import CurrentUser
 from app.security.dependencies import get_current_user
 from fastapi.testclient import TestClient
@@ -51,7 +52,15 @@ def _current_user() -> CurrentUser:
 
 class FakeDb:
     def __init__(self) -> None:
+        self.added: list[object] = []
+        self.flushed = False
         self.committed = False
+
+    def add(self, instance: object) -> None:
+        self.added.append(instance)
+
+    def flush(self) -> None:
+        self.flushed = True
 
     def commit(self) -> None:
         self.committed = True
@@ -91,7 +100,9 @@ def _version() -> KnowledgeDocumentVersion:
 
 
 def test_list_documents_returns_knowledge_contract() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -133,9 +144,31 @@ def test_list_documents_returns_knowledge_contract() -> None:
     assert call.kwargs["search"] == "magazyn"
     assert call.kwargs["current_user"].department_id == DEPARTMENT_ID
 
+    assert fake_db.flushed is True
+    assert fake_db.committed is True
+    assert len(fake_db.added) == 1
+
+    audit_event = fake_db.added[0]
+
+    assert isinstance(audit_event, AuditEvent)
+    assert audit_event.event_type == "knowledge_search"
+    assert audit_event.resource_type == "document"
+    assert audit_event.resource_id is None
+    assert audit_event.metadata_json == {
+        "search_used": True,
+        "result_count": 1,
+    }
+
+    audit_metadata = str(audit_event.metadata_json)
+
+    assert "magazyn" not in audit_metadata
+    assert "Procedura magazynowa" not in audit_metadata
+
 
 def test_get_document_returns_document_details() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -157,9 +190,23 @@ def test_get_document_returns_document_details() -> None:
     assert response.json()["title"] == "Procedura magazynowa"
     assert response.json()["department_id"] == str(DEPARTMENT_ID)
 
+    assert fake_db.flushed is True
+    assert fake_db.committed is True
+    assert len(fake_db.added) == 1
+
+    audit_event = fake_db.added[0]
+
+    assert isinstance(audit_event, AuditEvent)
+    assert audit_event.event_type == "knowledge_document_viewed"
+    assert audit_event.resource_type == "document"
+    assert audit_event.resource_id == str(DOCUMENT_ID)
+    assert audit_event.metadata_json == {}
+
 
 def test_get_document_returns_404_when_document_is_inaccessible() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -180,9 +227,14 @@ def test_get_document_returns_404_when_document_is_inaccessible() -> None:
         "detail": "Document not found.",
     }
 
+    assert fake_db.added == []
+    assert fake_db.committed is False
+
 
 def test_get_document_versions_returns_version_history() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -221,9 +273,33 @@ def test_get_document_versions_returns_version_history() -> None:
         }
     ]
 
+    assert fake_db.flushed is True
+    assert fake_db.committed is True
+    assert len(fake_db.added) == 1
+
+    audit_event = fake_db.added[0]
+
+    assert isinstance(audit_event, AuditEvent)
+    assert (
+        audit_event.event_type
+        == "knowledge_document_versions_viewed"
+    )
+    assert audit_event.resource_type == "document"
+    assert audit_event.resource_id == str(DOCUMENT_ID)
+    assert audit_event.metadata_json == {
+        "version_count": 1,
+    }
+
+    assert (
+        "https://example.test/procedura.pdf"
+        not in str(audit_event.metadata_json)
+    )
+
 
 def test_get_document_versions_returns_404_for_inaccessible_document() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -244,9 +320,14 @@ def test_get_document_versions_returns_404_for_inaccessible_document() -> None:
         "detail": "Document not found.",
     }
 
+    assert fake_db.added == []
+    assert fake_db.committed is False
+
 
 def test_list_documents_rejects_search_over_500_characters() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -262,14 +343,17 @@ def test_list_documents_rejects_search_over_500_characters() -> None:
         app.dependency_overrides.clear()
 
     assert response.status_code == 422
+    assert fake_db.added == []
+    assert fake_db.committed is False
 
 
 def test_upload_document_uses_current_user_organization() -> None:
     current_user = _current_user()
     document_id = uuid.uuid4()
     version_id = uuid.uuid4()
+    fake_db = FakeDb()
 
-    app.dependency_overrides[get_db] = _override_db
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = lambda: current_user
 
     try:
@@ -306,7 +390,7 @@ def test_upload_document_uses_current_user_organization() -> None:
                 files={
                     "file": (
                         "procedura.txt",
-                        "Treść procedury magazynowej.".encode(),
+                        "TreЕ›Д‡ procedury magazynowej.".encode(),
                         "text/plain",
                     ),
                 },
@@ -333,13 +417,40 @@ def test_upload_document_uses_current_user_organization() -> None:
     assert request.organization_id == current_user.organization_id
     assert request.title == "Procedura magazynowa"
     assert request.filename == "procedura.txt"
-    assert request.content == "Treść procedury magazynowej.".encode()
+    assert request.content == "TreЕ›Д‡ procedury magazynowej.".encode()
     assert request.source_type == "upload"
     assert request.external_id == "procedura-001"
 
+    assert fake_db.flushed is True
+    assert fake_db.committed is True
+    assert len(fake_db.added) == 1
+
+    audit_event = fake_db.added[0]
+
+    assert isinstance(audit_event, AuditEvent)
+    assert audit_event.event_type == "knowledge_document_uploaded"
+    assert audit_event.resource_type == "document"
+    assert audit_event.resource_id == str(document_id)
+    assert audit_event.metadata_json == {
+        "created_document": True,
+        "created_version": True,
+        "version_number": 1,
+        "chunks_created": 3,
+        "embeddings_created": 3,
+    }
+
+    audit_metadata = str(audit_event.metadata_json)
+
+    assert "Procedura magazynowa" not in audit_metadata
+    assert "procedura.txt" not in audit_metadata
+    assert "procedura-001" not in audit_metadata
+    assert "TreЕ›Д‡ procedury magazynowej." not in audit_metadata
+
 
 def test_upload_document_rejects_empty_file() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -376,9 +487,14 @@ def test_upload_document_rejects_empty_file() -> None:
 
     mocked_provider.assert_not_called()
 
+    assert fake_db.added == []
+    assert fake_db.committed is False
+
 
 def test_upload_document_maps_ingestion_error_to_422() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -402,7 +518,7 @@ def test_upload_document_maps_ingestion_error_to_422() -> None:
             response = client.post(
                 "/api/knowledge/documents",
                 data={
-                    "title": "Nieobsługiwany dokument",
+                    "title": "NieobsЕ‚ugiwany dokument",
                 },
                 files={
                     "file": (
@@ -420,11 +536,15 @@ def test_upload_document_maps_ingestion_error_to_422() -> None:
         "detail": "Unsupported document type.",
     }
 
+    assert fake_db.added == []
+    assert fake_db.committed is False
+
 
 def test_upload_document_validates_requested_department() -> None:
     department_id = uuid.uuid4()
+    fake_db = FakeDb()
 
-    app.dependency_overrides[get_db] = _override_db
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
 
     try:
@@ -445,7 +565,7 @@ def test_upload_document_validates_requested_department() -> None:
                 files={
                     "file": (
                         "hr.txt",
-                        "Treść dokumentu HR.".encode(),
+                        "TreЕ›Д‡ dokumentu HR.".encode(),
                         "text/plain",
                     ),
                 },
@@ -454,7 +574,11 @@ def test_upload_document_validates_requested_department() -> None:
         app.dependency_overrides.clear()
 
     mocked_validate_department.assert_called_once()
+
     assert response.status_code == 403
     assert response.json() == {
         "detail": "User cannot manage documents for this department.",
-    }    
+    }
+
+    assert fake_db.added == []
+    assert fake_db.committed is False

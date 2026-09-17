@@ -25,11 +25,28 @@ from app.ai.reliability.sufficiency import (
 from app.core.config import Settings, get_settings
 from app.db.dependencies import get_db
 from app.main import app
+from app.models.audit_event import AuditEvent
 from app.retrieval.context import RagContext
 from app.retrieval.evidence import CitationSource, EvidenceItem
 from app.security.current_user import CurrentUser
 from app.security.dependencies import get_current_user
 from fastapi.testclient import TestClient
+
+
+class FakeDb:
+    def __init__(self) -> None:
+        self.added: list[object] = []
+        self.flushed = False
+        self.committed = False
+
+    def add(self, instance: object) -> None:
+        self.added.append(instance)
+
+    def flush(self) -> None:
+        self.flushed = True
+
+    def commit(self) -> None:
+        self.committed = True
 
 
 def _current_user() -> CurrentUser:
@@ -48,11 +65,11 @@ def _context() -> RagContext:
         document_id=uuid.uuid4(),
         document_version_id=uuid.uuid4(),
         document_title="Procedura magazynowa",
-        content="Treść procedury magazynowej.",
+        content="TreЕ›Д‡ procedury magazynowej.",
         chunk_index=0,
         distance=0.1,
         page_number=3,
-        section_title="Przyjęcie towaru",
+        section_title="PrzyjД™cie towaru",
         source_locator={"page": 3},
         source_system="sharepoint",
         source_uri="https://example.test/procedura",
@@ -67,7 +84,7 @@ def _context() -> RagContext:
     )
 
     return RagContext(
-        query="Jak przyjąć towar?",
+        query="Jak przyjД…Д‡ towar?",
         sources=[
             CitationSource(
                 label="S1",
@@ -105,7 +122,7 @@ def _rag_result() -> RagAnswerResult:
     )
 
     answer = GeneratedAnswer(
-        text="Towar należy przyjąć zgodnie z procedurą [S1].",
+        text="Towar naleЕјy przyjД…Д‡ zgodnie z procedurД… [S1].",
         model_name="fake-answer-model",
         citation_validation=CitationValidationResult(
             used_labels={"S1"},
@@ -124,8 +141,8 @@ def _rag_result() -> RagAnswerResult:
     )
 
 
-def _override_db() -> object:
-    return object()
+def _override_db() -> FakeDb:
+    return FakeDb()
 
 
 def _override_settings() -> Settings:
@@ -136,7 +153,9 @@ def _override_settings() -> Settings:
 
 
 def test_rag_query_returns_grounded_answer_contract() -> None:
-    app.dependency_overrides[get_db] = _override_db
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
     app.dependency_overrides[get_settings] = _override_settings
 
@@ -150,7 +169,7 @@ def test_rag_query_returns_grounded_answer_contract() -> None:
             response = client.post(
                 "/api/rag/query",
                 json={
-                    "query": "Jak przyjąć towar?",
+                    "query": "Jak przyjД…Д‡ towar?",
                 },
             )
     finally:
@@ -159,14 +178,14 @@ def test_rag_query_returns_grounded_answer_contract() -> None:
     assert response.status_code == 200
 
     assert response.json() == {
-        "answer": "Towar należy przyjąć zgodnie z procedurą [S1].",
+        "answer": "Towar naleЕјy przyjД…Д‡ zgodnie z procedurД… [S1].",
         "model_name": "fake-answer-model",
         "citations": [
             {
                 "label": "S1",
                 "document_title": "Procedura magazynowa",
                 "page_number": 3,
-                "section_title": "Przyjęcie towaru",
+                "section_title": "PrzyjД™cie towaru",
                 "source_system": "sharepoint",
                 "source_uri": "https://example.test/procedura",
             }
@@ -175,6 +194,23 @@ def test_rag_query_returns_grounded_answer_contract() -> None:
             "decision": "allow",
             "reasons": [],
         },
+    }
+
+    assert fake_db.flushed is True
+    assert fake_db.committed is True
+    assert len(fake_db.added) == 1
+
+    audit_event = fake_db.added[0]
+
+    assert isinstance(audit_event, AuditEvent)
+    assert audit_event.event_type == "rag_query"
+    assert audit_event.resource_type == "rag"
+    assert audit_event.metadata_json == {
+        "model_name": "fake-answer-model",
+        "evidence_count": 1,
+        "citation_count": 1,
+        "reliability_decision": "allow",
+        "reliability_reasons": [],
     }
 
 
@@ -196,7 +232,7 @@ def test_rag_query_maps_reliability_refusal_to_422() -> None:
             response = client.post(
                 "/api/rag/query",
                 json={
-                    "query": "Pytanie bez wystarczających źródeł",
+                    "query": "Pytanie bez wystarczajД…cych ЕєrГіdeЕ‚",
                 },
             )
     finally:
@@ -230,8 +266,11 @@ def test_rag_query_rejects_empty_query() -> None:
 
     assert response.status_code == 422
 
-def test_rag_query_passes_trace_context_to_service() -> None:
-    app.dependency_overrides[get_db] = _override_db
+
+def test_rag_query_passes_trace_context_to_service_and_audit() -> None:
+    fake_db = FakeDb()
+
+    app.dependency_overrides[get_db] = lambda: fake_db
     app.dependency_overrides[get_current_user] = _current_user
     app.dependency_overrides[get_settings] = _override_settings
 
@@ -247,7 +286,7 @@ def test_rag_query_passes_trace_context_to_service() -> None:
             response = client.post(
                 "/api/rag/query",
                 json={
-                    "query": "Jak przyjąć towar?",
+                    "query": "Jak przyjД…Д‡ towar?",
                 },
                 headers={
                     "X-Trace-ID": str(trace_id),
@@ -261,7 +300,6 @@ def test_rag_query_passes_trace_context_to_service() -> None:
     mocked_answer.assert_called_once()
 
     call_kwargs = mocked_answer.call_args.kwargs
-
     trace_context = call_kwargs["trace_context"]
 
     assert trace_context.trace_id == trace_id
@@ -270,3 +308,12 @@ def test_rag_query_passes_trace_context_to_service() -> None:
         == response.headers["X-Request-ID"]
     )
     assert trace_context.action_id is None
+
+    assert len(fake_db.added) == 1
+
+    audit_event = fake_db.added[0]
+
+    assert isinstance(audit_event, AuditEvent)
+    assert audit_event.trace_id == trace_id
+    assert audit_event.request_id == trace_context.request_id
+    assert audit_event.action_id is None

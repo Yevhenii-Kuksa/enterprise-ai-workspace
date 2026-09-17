@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.audit import router as audit_router
 from app.api.knowledge import router as knowledge_router
 from app.api.rag import router as rag_router
 from app.core.structured_logging import configure_structured_logging
@@ -17,6 +18,7 @@ app.add_middleware(TraceContextMiddleware)
 
 app.include_router(rag_router)
 app.include_router(knowledge_router)
+app.include_router(audit_router)
 
 
 @app.get("/health", tags=["System"])
