@@ -17,6 +17,7 @@ from app.ai.reliability.service import (
     ReliabilityResult,
     evaluate_reliability,
 )
+from app.core.error_taxonomy import ErrorCategory
 from app.core.trace_context import TraceContext
 from app.retrieval.context import RagContext
 
@@ -109,10 +110,34 @@ def generate_grounded_answer(
 
     started_at = perf_counter()
 
-    result = provider.generate_answer(
-        system_prompt=SYSTEM_PROMPT,
-        user_prompt=build_user_prompt(context),
-    )
+    try:
+        result = provider.generate_answer(
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=build_user_prompt(context),
+        )
+    except Exception as exc:
+        duration_ms = (perf_counter() - started_at) * 1000
+
+        if trace_context is not None:
+            logger.error(
+                "AI generation failed.",
+                extra={
+                    "trace_id": str(trace_context.trace_id),
+                    "request_id": str(trace_context.request_id),
+                    "action_id": (
+                        str(trace_context.action_id)
+                        if trace_context.action_id is not None
+                        else None
+                    ),
+                    "event_type": "ai_generation_failed",
+                    "model_name": provider.model_name,
+                    "error_type": type(exc).__name__,
+                    "error_category": ErrorCategory.AI_PROVIDER.value,
+                    "duration_ms": duration_ms,
+                },
+            )
+
+        raise
 
     duration_ms = (perf_counter() - started_at) * 1000
 

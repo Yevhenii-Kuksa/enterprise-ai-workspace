@@ -385,3 +385,57 @@ def test_generate_grounded_answer_emits_correlated_ai_trace(
     assert record.duration_ms >= 0
 
     assert result.model_name == "fake-answer-model"
+
+class FailingAIAnswerProvider:
+    @property
+    def model_name(self) -> str:
+        return "fake-failing-model"
+
+    def generate_answer(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> AIAnswerResult:
+        raise TimeoutError("Synthetic AI provider timeout.")
+
+
+def test_generate_grounded_answer_emits_ai_failure_trace(
+    caplog,
+) -> None:
+    provider = FailingAIAnswerProvider()
+    context = _rag_context()
+    trace_context = TraceContext.create()
+
+    with caplog.at_level(
+        "ERROR",
+        logger="enterprise_ai_workspace.ai",
+    ):
+        try:
+            generate_grounded_answer(
+                provider=provider,
+                context=context,
+                trace_context=trace_context,
+            )
+        except TimeoutError:
+            pass
+
+    matching_records = [
+        record
+        for record in caplog.records
+        if getattr(record, "event_type", None)
+        == "ai_generation_failed"
+    ]
+
+    assert len(matching_records) == 1
+
+    record = matching_records[0]
+
+    assert record.trace_id == str(trace_context.trace_id)
+    assert record.request_id == str(trace_context.request_id)
+    assert record.action_id is None
+    assert record.model_name == "fake-failing-model"
+    assert record.error_type == "TimeoutError"
+    assert record.error_category == "ai_provider"
+    assert isinstance(record.duration_ms, float)
+    assert record.duration_ms >= 0
