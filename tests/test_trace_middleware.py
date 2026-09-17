@@ -143,5 +143,6 @@ def test_failed_request_emits_correlated_error_log(
     assert record.method == "GET"
     assert record.path == "/test-observability-error"
     assert record.error_type == "RuntimeError"
+    assert record.error_category == "internal"
     assert isinstance(record.duration_ms, float)
     assert record.duration_ms >= 0

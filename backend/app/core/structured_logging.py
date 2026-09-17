@@ -7,6 +7,7 @@ TELEMETRY_FIELDS = (
     "path",
     "status_code",
     "error_type",
+    "error_category",
     "duration_ms",
     "organization_id",
     "user_id",
@@ -42,6 +43,7 @@ class JsonFormatter(logging.Formatter):
             payload,
             ensure_ascii=False,
         )
+
 
 def configure_structured_logging() -> None:
     handler = logging.StreamHandler()

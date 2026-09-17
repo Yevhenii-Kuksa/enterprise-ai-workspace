@@ -6,6 +6,7 @@ from time import perf_counter
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.core.error_taxonomy import classify_error
 from app.core.trace_context import TraceContext
 
 TRACE_ID_HEADER = "X-Trace-ID"
@@ -57,6 +58,7 @@ class TraceContextMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "path": request.url.path,
                     "error_type": type(exc).__name__,
+                    "error_category": classify_error(exc).value,
                     "duration_ms": duration_ms,
                 },
             )
