@@ -1,7 +1,10 @@
 import json
 import logging
 
-from app.core.structured_logging import JsonFormatter
+from app.core.structured_logging import (
+    JsonFormatter,
+    configure_structured_logging,
+)
 
 
 def test_json_formatter_outputs_structured_log() -> None:
@@ -89,3 +92,17 @@ def test_json_formatter_includes_safe_telemetry_fields() -> None:
     assert payload["invalid_citation_count"] == 0
     assert payload["reliability_decision"] == "allow"
     assert payload["duration_ms"] == 42.5
+
+def test_configure_structured_logging_configures_application_logger() -> None:
+    configure_structured_logging()
+
+    logger = logging.getLogger("enterprise_ai_workspace")
+
+    assert logger.level == logging.INFO
+    assert logger.propagate is True
+    assert len(logger.handlers) == 1
+
+    handler = logger.handlers[0]
+
+    assert isinstance(handler, logging.StreamHandler)
+    assert isinstance(handler.formatter, JsonFormatter)

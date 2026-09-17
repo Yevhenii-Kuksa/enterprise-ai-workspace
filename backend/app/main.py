@@ -2,7 +2,10 @@ from fastapi import FastAPI
 
 from app.api.knowledge import router as knowledge_router
 from app.api.rag import router as rag_router
+from app.core.structured_logging import configure_structured_logging
 from app.core.trace_middleware import TraceContextMiddleware
+
+configure_structured_logging()
 
 app = FastAPI(
     title="Enterprise AI Workspace API",

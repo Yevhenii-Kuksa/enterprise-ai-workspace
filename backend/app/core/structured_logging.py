@@ -42,3 +42,13 @@ class JsonFormatter(logging.Formatter):
             payload,
             ensure_ascii=False,
         )
+
+def configure_structured_logging() -> None:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+
+    logger = logging.getLogger("enterprise_ai_workspace")
+    logger.handlers.clear()
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = True
