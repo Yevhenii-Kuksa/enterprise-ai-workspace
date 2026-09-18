@@ -1,3 +1,4 @@
+from app.models.action_execution import ActionExecution
 from app.models.approval_proposal import ApprovalProposal
 from app.models.audit_event import AuditEvent
 from app.models.chunk_embedding import ChunkEmbedding
@@ -13,6 +14,8 @@ from app.models.user import User
 from app.models.user_role import user_roles
 
 __all__ = [
+    "ActionExecution",
+    "ApprovalProposal",
     "AuditEvent",
     "ChunkEmbedding",
     "DocumentChunk",
@@ -25,5 +28,4 @@ __all__ = [
     "User",
     "role_permissions",
     "user_roles",
-    "ApprovalProposal",
 ]

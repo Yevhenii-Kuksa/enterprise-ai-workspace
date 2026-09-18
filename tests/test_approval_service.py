@@ -2,7 +2,6 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from app.approvals.schemas import (
     ApprovalProposalCreate,
     ApprovalStatus,
