@@ -1,6 +1,6 @@
 ﻿from fastapi import FastAPI
 
-from app.api import approvals, erp, erp_intelligence, executions, executive
+from app.api import approvals, erp, erp_intelligence, executions, executive, integrations
 from app.api.audit import router as audit_router
 from app.api.knowledge import router as knowledge_router
 from app.api.rag import router as rag_router
@@ -25,6 +25,7 @@ app.include_router(erp_intelligence.router)
 app.include_router(executive.router)
 app.include_router(approvals.router)
 app.include_router(executions.router)
+app.include_router(integrations.router)
 
 
 @app.get("/health", tags=["System"])
