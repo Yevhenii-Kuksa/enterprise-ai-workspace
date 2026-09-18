@@ -1,3 +1,4 @@
+from app.models.approval_proposal import ApprovalProposal
 from app.models.audit_event import AuditEvent
 from app.models.chunk_embedding import ChunkEmbedding
 from app.models.department import Department
@@ -24,4 +25,5 @@ __all__ = [
     "User",
     "role_permissions",
     "user_roles",
+    "ApprovalProposal",
 ]

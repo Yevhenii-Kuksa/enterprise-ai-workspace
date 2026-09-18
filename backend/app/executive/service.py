@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime
 
+from app.approvals.schemas import ApprovalStatus
+from app.approvals.service import ApprovalService
 from app.erp.facts import FactType
 from app.erp.intelligence import (
     InventoryAvailability,
@@ -29,8 +31,13 @@ ACTIVE_ORDER_STATUSES = {
 
 
 class ExecutiveBriefingService:
-    def __init__(self, erp_service: ERPService) -> None:
+    def __init__(
+        self,
+        erp_service: ERPService,
+        approval_service: ApprovalService,
+    ) -> None:
         self._erp_service = erp_service
+        self._approval_service = approval_service
 
     def generate_briefing(
         self,
@@ -97,17 +104,28 @@ class ExecutiveBriefingService:
             order_exceptions=order_exceptions,
         )
 
+        approvals = ExecutiveApprovalSummary(
+            pending=self._approval_service.count_by_status(
+                organization_id=organization_id,
+                status=ApprovalStatus.PENDING,
+            ),
+            approved=self._approval_service.count_by_status(
+                organization_id=organization_id,
+                status=ApprovalStatus.APPROVED,
+            ),
+            rejected=self._approval_service.count_by_status(
+                organization_id=organization_id,
+                status=ApprovalStatus.REJECTED,
+            ),
+        )
+
         return ExecutiveBriefing(
             organization_id=organization_id,
             generated_at=now,
             summary=summary,
             inventory_risks=inventory_risks,
             order_exceptions=order_exceptions,
-            approvals=ExecutiveApprovalSummary(
-                pending=0,
-                approved=0,
-                rejected=0,
-            ),
+            approvals=approvals,
             evidence=evidence,
         )
 

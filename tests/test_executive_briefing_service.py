@@ -2,6 +2,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
+from app.approvals.schemas import ApprovalStatus
 from app.erp.demo_adapter import DemoERPAdapter
 from app.erp.facts import FactType
 from app.erp.intelligence import (
@@ -19,6 +20,16 @@ from app.executive.schemas import ExecutiveRiskLevel
 from app.executive.service import ExecutiveBriefingService
 
 NOW = datetime(2026, 9, 18, 12, 0, tzinfo=UTC)
+
+
+class ApprovalServiceStub:
+    def count_by_status(
+        self,
+        *,
+        organization_id: uuid.UUID,
+        status: ApprovalStatus,
+    ) -> int:
+        return 0
 
 
 def make_source(record_id: str) -> ERPSourceMetadata:
@@ -86,7 +97,8 @@ def test_generate_briefing_summary() -> None:
                     at_risk_order,
                 ],
             )
-        )
+        ),
+        ApprovalServiceStub(),
     )
 
     briefing = service.generate_briefing(
@@ -123,7 +135,8 @@ def test_inventory_risks_have_polish_messages_and_evidence() -> None:
             DemoERPAdapter(
                 inventory_items=[item],
             )
-        )
+        ),
+        ApprovalServiceStub(),
     )
 
     briefing = service.generate_briefing(
@@ -162,7 +175,8 @@ def test_order_exception_keeps_lifecycle_and_delay_separate() -> None:
             DemoERPAdapter(
                 orders=[order],
             )
-        )
+        ),
+        ApprovalServiceStub(),
     )
 
     briefing = service.generate_briefing(
@@ -208,7 +222,8 @@ def test_healthy_items_and_on_time_orders_are_not_exceptions() -> None:
                 inventory_items=[item],
                 orders=[order],
             )
-        )
+        ),
+        ApprovalServiceStub(),
     )
 
     briefing = service.generate_briefing(
@@ -253,7 +268,8 @@ def test_briefing_is_tenant_isolated() -> None:
                 inventory_items=[item],
                 orders=[order],
             )
-        )
+        ),
+        ApprovalServiceStub(),
     )
 
     briefing = service.generate_briefing(
@@ -298,7 +314,8 @@ def test_briefing_collects_top_level_evidence() -> None:
                 inventory_items=[item],
                 orders=[order],
             )
-        )
+        ),
+        ApprovalServiceStub(),
     )
 
     briefing = service.generate_briefing(
@@ -313,11 +330,26 @@ def test_briefing_collects_top_level_evidence() -> None:
     )
 
 
-def test_approvals_are_placeholder_until_approval_engine() -> None:
+def test_approvals_are_loaded_from_approval_service() -> None:
     organization_id = uuid.uuid4()
 
+    class ApprovalServiceStubWithValues:
+        def count_by_status(
+            self,
+            *,
+            organization_id: uuid.UUID,
+            status: ApprovalStatus,
+        ) -> int:
+            values = {
+                ApprovalStatus.PENDING: 3,
+                ApprovalStatus.APPROVED: 5,
+                ApprovalStatus.REJECTED: 2,
+            }
+            return values[status]
+
     service = ExecutiveBriefingService(
-        ERPService(DemoERPAdapter())
+        ERPService(DemoERPAdapter()),
+        ApprovalServiceStubWithValues(),
     )
 
     briefing = service.generate_briefing(
@@ -325,6 +357,6 @@ def test_approvals_are_placeholder_until_approval_engine() -> None:
         now=NOW,
     )
 
-    assert briefing.approvals.pending == 0
-    assert briefing.approvals.approved == 0
-    assert briefing.approvals.rejected == 0
+    assert briefing.approvals.pending == 3
+    assert briefing.approvals.approved == 5
+    assert briefing.approvals.rejected == 2
