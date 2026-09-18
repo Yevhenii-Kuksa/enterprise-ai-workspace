@@ -1,6 +1,6 @@
 ﻿from fastapi import FastAPI
 
-from app.api import approvals, executions, erp, erp_intelligence, executive
+from app.api import approvals, erp, erp_intelligence, executions, executive
 from app.api.audit import router as audit_router
 from app.api.knowledge import router as knowledge_router
 from app.api.rag import router as rag_router
