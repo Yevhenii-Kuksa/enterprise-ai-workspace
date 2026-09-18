@@ -1,6 +1,13 @@
 import uuid
+from datetime import datetime
 
 from app.erp.adapter import ERPAdapter
+from app.erp.intelligence import (
+    InventoryAvailability,
+    OrderDelayState,
+    calculate_inventory_availability,
+    calculate_order_delay_state,
+)
 from app.erp.schemas import (
     ERPCustomer,
     ERPInventoryItem,
@@ -81,6 +88,35 @@ class ERPService:
             location_id=location_id,
         )
 
+    def get_inventory_availability(
+        self,
+        *,
+        organization_id: uuid.UUID,
+        now: datetime,
+        product_id: uuid.UUID | None = None,
+        location_id: uuid.UUID | None = None,
+    ) -> list[InventoryAvailability]:
+        inventory_items = self.list_inventory(
+            organization_id=organization_id,
+            product_id=product_id,
+            location_id=location_id,
+        )
+
+        reservations = self.list_inventory_reservations(
+            organization_id=organization_id,
+            product_id=product_id,
+            location_id=location_id,
+        )
+
+        return [
+            calculate_inventory_availability(
+                item,
+                reservations,
+                now=now,
+            )
+            for item in inventory_items
+        ]
+
     def get_order(
         self,
         *,
@@ -99,4 +135,26 @@ class ERPService:
     ) -> list[ERPOrder]:
         return self._adapter.list_orders(
             organization_id=organization_id,
+        )
+
+    def get_order_delay_state(
+        self,
+        *,
+        organization_id: uuid.UUID,
+        order_id: uuid.UUID,
+        now: datetime,
+        at_risk_window_hours: int = 24,
+    ) -> OrderDelayState | None:
+        order = self.get_order(
+            organization_id=organization_id,
+            order_id=order_id,
+        )
+
+        if order is None:
+            return None
+
+        return calculate_order_delay_state(
+            order,
+            now=now,
+            at_risk_window_hours=at_risk_window_hours,
         )

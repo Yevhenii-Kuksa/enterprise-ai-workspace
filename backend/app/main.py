@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api import erp
+from app.api import erp, erp_intelligence
 from app.api.audit import router as audit_router
 from app.api.knowledge import router as knowledge_router
 from app.api.rag import router as rag_router
@@ -21,6 +21,7 @@ app.include_router(rag_router)
 app.include_router(knowledge_router)
 app.include_router(audit_router)
 app.include_router(erp.router)
+app.include_router(erp_intelligence.router)
 
 
 @app.get("/health", tags=["System"])
