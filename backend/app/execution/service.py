@@ -13,6 +13,7 @@ from app.approvals.schemas import (
 )
 from app.approvals.service import ApprovalService
 from app.core.trace_context import TraceContext
+from app.execution.audit import record_execution_audit_event
 from app.execution.executor import (
     ActionExecutor,
     ExecutionContext,
@@ -256,7 +257,50 @@ class ExecutionService:
             execution=execution,
             executor=executor,
             context=execution_context,
+            current_user=current_user,
         )
+
+    def list_executions(
+        self,
+        *,
+        organization_id: uuid.UUID,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[ActionExecution]:
+        statement = (
+            select(ActionExecution)
+            .where(
+                ActionExecution.organization_id
+                == organization_id
+            )
+            .order_by(ActionExecution.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )
+
+    def get_execution(
+        self,
+        *,
+        organization_id: uuid.UUID,
+        execution_id: uuid.UUID,
+    ) -> ActionExecution:
+        statement = select(ActionExecution).where(
+            ActionExecution.id == execution_id,
+            ActionExecution.organization_id == organization_id,
+        )
+
+        execution = self.db.scalar(statement)
+
+        if execution is None:
+            raise ExecutionError(
+                "Execution not found."
+            )
+
+        return execution
 
     def _run_execution(
         self,
@@ -264,6 +308,7 @@ class ExecutionService:
         execution: ActionExecution,
         executor: ActionExecutor,
         context: ExecutionContext,
+        current_user: CurrentUser,
     ) -> ActionExecution:
         if execution.started_at is None:
             execution.started_at = datetime.now(UTC)
@@ -285,6 +330,17 @@ class ExecutionService:
                 execution.error_message = None
                 execution.finished_at = datetime.now(UTC)
 
+                record_execution_audit_event(
+                    self.db,
+                    current_user=current_user,
+                    trace_context=context.trace_context,
+                    execution_id=execution.id,
+                    proposal_id=execution.proposal_id,
+                    action_type=execution.action_type,
+                    status=execution.status,
+                    event_type="action_execution_succeeded",
+                )
+
                 self.db.flush()
                 return execution
 
@@ -304,11 +360,34 @@ class ExecutionService:
             execution.status = ExecutionStatus.FAILED.value
             execution.finished_at = datetime.now(UTC)
 
+            record_execution_audit_event(
+                self.db,
+                current_user=current_user,
+                trace_context=context.trace_context,
+                execution_id=execution.id,
+                proposal_id=execution.proposal_id,
+                action_type=execution.action_type,
+                status=execution.status,
+                event_type="action_execution_failed",
+            )
+
             self.db.flush()
             return execution
 
         execution.status = ExecutionStatus.FAILED.value
         execution.finished_at = datetime.now(UTC)
+
+        record_execution_audit_event(
+            self.db,
+            current_user=current_user,
+            trace_context=context.trace_context,
+            execution_id=execution.id,
+            proposal_id=execution.proposal_id,
+            action_type=execution.action_type,
+            status=execution.status,
+            event_type="action_execution_failed",
+        )
+
         self.db.flush()
 
         return execution
@@ -320,9 +399,7 @@ class ExecutionService:
         context: ExecutionContext,
     ) -> ExecutionResult:
         try:
-            execute = executor.execute
-
-            result = execute(
+            result = executor.execute(
                 context=context,
             )
         except Exception as exc:

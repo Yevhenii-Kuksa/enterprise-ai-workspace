@@ -13,6 +13,7 @@ from app.execution.schemas import (
 from app.execution.service import (
     ExecutionActionDisabledError,
     ExecutionActionNotAllowedError,
+    ExecutionError,
     ExecutionFingerprintError,
     ExecutionInvalidApprovalStateError,
     ExecutionPermissionError,
@@ -480,5 +481,202 @@ def test_repeated_request_returns_same_execution() -> None:
 
         assert second.id == first.id
         assert second.idempotency_key == first.idempotency_key
+
+        db.rollback()
+
+def test_get_execution_returns_execution_for_same_organization() -> None:
+    organization_id = uuid.uuid4()
+    author_id = uuid.uuid4()
+    approver_id = uuid.uuid4()
+    executor_id = uuid.uuid4()
+
+    with SessionLocal() as db:
+        add_organization(db, organization_id)
+
+        for user_id in (
+            author_id,
+            approver_id,
+            executor_id,
+        ):
+            add_user(
+                db,
+                user_id=user_id,
+                organization_id=organization_id,
+            )
+
+        db.flush()
+
+        proposal = create_approved_proposal(
+            db,
+            organization_id=organization_id,
+            author_id=author_id,
+            approver_id=approver_id,
+        )
+
+        service = ExecutionService(
+            db,
+            registry(),
+        )
+
+        execution = service.request_execution(
+            organization_id=organization_id,
+            proposal_id=proposal.id,
+            current_user=current_user(
+                user_id=executor_id,
+                organization_id=organization_id,
+            ),
+            trace_context=TraceContext.create(),
+        )
+
+        found = service.get_execution(
+            organization_id=organization_id,
+            execution_id=execution.id,
+        )
+
+        assert found.id == execution.id
+        assert found.organization_id == organization_id
+
+        db.rollback()
+
+def test_get_execution_blocks_cross_tenant_access() -> None:
+    organization_id = uuid.uuid4()
+    other_organization_id = uuid.uuid4()
+    author_id = uuid.uuid4()
+    approver_id = uuid.uuid4()
+    executor_id = uuid.uuid4()
+
+    with SessionLocal() as db:
+        add_organization(db, organization_id)
+        add_organization(db, other_organization_id)
+
+        for user_id in (
+            author_id,
+            approver_id,
+            executor_id,
+        ):
+            add_user(
+                db,
+                user_id=user_id,
+                organization_id=organization_id,
+            )
+
+        db.flush()
+
+        proposal = create_approved_proposal(
+            db,
+            organization_id=organization_id,
+            author_id=author_id,
+            approver_id=approver_id,
+        )
+
+        service = ExecutionService(
+            db,
+            registry(),
+        )
+
+        execution = service.request_execution(
+            organization_id=organization_id,
+            proposal_id=proposal.id,
+            current_user=current_user(
+                user_id=executor_id,
+                organization_id=organization_id,
+            ),
+            trace_context=TraceContext.create(),
+        )
+
+        with pytest.raises(ExecutionError):
+            service.get_execution(
+                organization_id=other_organization_id,
+                execution_id=execution.id,
+            )
+
+        db.rollback()
+
+def test_list_executions_returns_only_same_organization() -> None:
+    organization_id = uuid.uuid4()
+    other_organization_id = uuid.uuid4()
+
+    author_id = uuid.uuid4()
+    approver_id = uuid.uuid4()
+    executor_id = uuid.uuid4()
+
+    other_author_id = uuid.uuid4()
+    other_approver_id = uuid.uuid4()
+    other_executor_id = uuid.uuid4()
+
+    with SessionLocal() as db:
+        add_organization(db, organization_id)
+        add_organization(db, other_organization_id)
+
+        for user_id in (
+            author_id,
+            approver_id,
+            executor_id,
+        ):
+            add_user(
+                db,
+                user_id=user_id,
+                organization_id=organization_id,
+            )
+
+        for user_id in (
+            other_author_id,
+            other_approver_id,
+            other_executor_id,
+        ):
+            add_user(
+                db,
+                user_id=user_id,
+                organization_id=other_organization_id,
+            )
+
+        db.flush()
+
+        proposal = create_approved_proposal(
+            db,
+            organization_id=organization_id,
+            author_id=author_id,
+            approver_id=approver_id,
+        )
+
+        other_proposal = create_approved_proposal(
+            db,
+            organization_id=other_organization_id,
+            author_id=other_author_id,
+            approver_id=other_approver_id,
+        )
+
+        service = ExecutionService(
+            db,
+            registry(),
+        )
+
+        execution = service.request_execution(
+            organization_id=organization_id,
+            proposal_id=proposal.id,
+            current_user=current_user(
+                user_id=executor_id,
+                organization_id=organization_id,
+            ),
+            trace_context=TraceContext.create(),
+        )
+
+        service.request_execution(
+            organization_id=other_organization_id,
+            proposal_id=other_proposal.id,
+            current_user=current_user(
+                user_id=other_executor_id,
+                organization_id=other_organization_id,
+            ),
+            trace_context=TraceContext.create(),
+        )
+
+        executions = service.list_executions(
+            organization_id=organization_id,
+        )
+
+        assert len(executions) == 1
+        assert executions[0].id == execution.id
+        assert executions[0].organization_id == organization_id
 
         db.rollback()

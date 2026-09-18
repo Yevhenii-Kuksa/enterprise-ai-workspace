@@ -15,9 +15,11 @@ from app.execution.schemas import (
     ExecutionStatus,
 )
 from app.execution.service import ExecutionService
+from app.models.audit_event import AuditEvent
 from app.models.organization import Organization
 from app.models.user import User
 from app.security.current_user import CurrentUser
+from sqlalchemy import select
 
 ACTION_TYPE = "order.update"
 PERMISSION = "action.execute"
@@ -207,6 +209,8 @@ def test_successful_execution() -> None:
             approver_id=approver_id,
         )
 
+        trace_context = TraceContext.create()
+
         execution = build_service(
             db,
             executor,
@@ -217,7 +221,7 @@ def test_successful_execution() -> None:
                 user_id=executor_id,
                 organization_id=organization_id,
             ),
-            trace_context=TraceContext.create(),
+            trace_context=trace_context,
         )
 
         assert execution.status == ExecutionStatus.SUCCEEDED.value
@@ -228,6 +232,22 @@ def test_successful_execution() -> None:
         assert executor.calls == 1
         assert executor.last_context is not None
         assert executor.last_context.action_id == execution.id
+
+        audit_event = db.scalar(
+            select(AuditEvent).where(
+                AuditEvent.action_id == execution.id,
+                AuditEvent.event_type
+                == "action_execution_succeeded",
+            )
+        )
+
+        assert audit_event is not None
+        assert audit_event.organization_id == organization_id
+        assert audit_event.user_id == executor_id
+        assert audit_event.trace_id == trace_context.trace_id
+        assert audit_event.action_id == execution.id
+        assert audit_event.resource_type == "action_execution"
+        assert audit_event.resource_id == str(execution.id)
 
         db.rollback()
 
@@ -488,6 +508,21 @@ def test_executor_exception_becomes_controlled_failure() -> None:
         assert execution.error_code == "executor_exception"
         assert execution.error_message == "Executor crashed."
         assert executor.calls == 1
+
+        audit_event = db.scalar(
+            select(AuditEvent).where(
+                AuditEvent.action_id == execution.id,
+                AuditEvent.event_type
+                == "action_execution_failed",
+            )
+        )
+
+        assert audit_event is not None
+        assert audit_event.organization_id == organization_id
+        assert audit_event.user_id == executor_id
+        assert audit_event.resource_type == "action_execution"
+        assert audit_event.resource_id == str(execution.id)
+        assert audit_event.action_id == execution.id
 
         db.rollback()
 
