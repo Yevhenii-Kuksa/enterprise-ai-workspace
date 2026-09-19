@@ -29,6 +29,7 @@ import ErpPage from './pages/ErpPage'
 import ExecutionsPage from './pages/ExecutionsPage'
 import IntegrationsPage from './pages/IntegrationsPage'
 import KnowledgePage from './pages/KnowledgePage'
+import SettingsPage from './pages/SettingsPage'
 
 import './App.css'
 
@@ -129,9 +130,14 @@ function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <button
-          className="nav-item"
-          type="button"
+        <NavLink
+          className={({ isActive }) =>
+            `nav-item ${isActive ? 'active' : ''}`
+          }
+          style={{
+            textDecoration: 'none',
+          }}
+          to="/settings"
         >
           <Settings
             size={18}
@@ -139,7 +145,7 @@ function Sidebar() {
           />
 
           <span>Ustawienia</span>
-        </button>
+        </NavLink>
 
         <div className="user-card">
           <div className="avatar">AK</div>
@@ -299,6 +305,16 @@ function App() {
               </>
             }
             path="/audit"
+          />
+
+          <Route
+            element={
+              <>
+                <PageHeader title="Ustawienia" />
+                <SettingsPage />
+              </>
+            }
+            path="/settings"
           />
 
           <Route
