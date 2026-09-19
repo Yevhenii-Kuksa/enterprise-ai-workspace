@@ -9,31 +9,30 @@ import {
   User,
 } from 'lucide-react'
 
+import {
+  demoKnowledgeDocuments,
+  mainRisk,
+} from '../data/demoData'
+
 import './AssistantPage.css'
 
 const suggestedQuestions = [
-  'Które zamówienia mają obecnie najwyższe ryzyko opóźnienia?',
-  'Jakie dokumenty opisują procedurę reklamacji?',
-  'Czy dostawca potwierdził termin dostawy komponentu CMP-204?',
+  'Dlaczego ORD-1048 ma status AT RISK?',
+  'Kiedy dotrze brakujący MAT-204?',
+  'Jakie dokumenty wspierają ocenę ryzyka ORD-1048?',
+  'Jakie działanie wymaga zatwierdzenia człowieka?',
 ]
 
-const sources = [
-  {
-    reference: '[S1]',
-    title: 'ORD-1048',
-    description: 'ERP · Zamówienie',
-  },
-  {
-    reference: '[S2]',
-    title: 'Stan magazynowy CMP-204',
-    description: 'ERP · Magazyn',
-  },
-  {
-    reference: '[S3]',
-    title: 'Supply update',
-    description: 'Gmail · Dostawca',
-  },
+const sourceCodes = [
+  'TECH-12',
+  'PROD-W38',
+  'PUR-02',
+  'SUP-01',
 ]
+
+const sources = demoKnowledgeDocuments.filter((document) =>
+  sourceCodes.includes(document.code),
+)
 
 function AssistantPage() {
   return (
@@ -46,102 +45,107 @@ function AssistantPage() {
 
           <div>
             <span className="section-kicker">
-              Enterprise AI Assistant
+              Grounded AI
             </span>
 
             <h2>Asystent AI</h2>
 
             <p>
-              Zadawaj pytania dotyczące dokumentów, procesów,
-              zamówień i danych operacyjnych Nexalvora Industries.
-              Odpowiedzi są generowane na podstawie dostępnych źródeł.
+              Zadawaj pytania o dane operacyjne, dokumenty,
+              integracje i procesy Nexalvora. Odpowiedzi są
+              przygotowywane na podstawie dostępnych źródeł.
             </p>
           </div>
         </div>
 
-        <div className="assistant-security">
+        <div className="assistant-hero-status">
           <ShieldCheck size={18} />
 
           <div>
-            <span>Tryb bezpieczny</span>
-            <strong>Źródła wymagane</strong>
+            <span>Status</span>
+            <strong>Grounded & governed</strong>
           </div>
         </div>
       </section>
 
       <section className="assistant-layout">
         <article className="panel-card assistant-chat">
-          <div className="assistant-chat-header">
+          <div className="panel-header">
             <div>
               <span className="section-kicker">
                 Rozmowa
               </span>
 
-              <h3>Nowe zapytanie</h3>
+              <h3>Analiza ORD-1048</h3>
             </div>
 
-            <span className="assistant-model-badge">
-              Grounded AI
-            </span>
+            <div className="assistant-chat-status">
+              <span className="status-dot" />
+              AI online
+            </div>
           </div>
 
           <div className="assistant-conversation">
             <div className="assistant-message user-message">
-              <div className="assistant-avatar user-avatar">
-                <User size={17} />
+              <div className="assistant-message-avatar">
+                <User size={18} />
               </div>
 
               <div className="assistant-message-content">
-                <span className="assistant-message-author">
-                  Ty
-                </span>
+                <span>Anna Kowalska</span>
 
                 <div className="assistant-message-bubble">
-                  Które zamówienie wymaga dziś największej uwagi
-                  i dlaczego?
+                  Dlaczego ORD-1048 ma status AT RISK i czy
+                  możemy utrzymać termin wysyłki 23.09.2026?
                 </div>
               </div>
             </div>
 
             <div className="assistant-message ai-message">
-              <div className="assistant-avatar ai-avatar">
-                <Sparkles size={17} />
+              <div className="assistant-message-avatar">
+                <Sparkles size={18} />
               </div>
 
               <div className="assistant-message-content">
-                <div className="assistant-message-heading">
-                  <span className="assistant-message-author">
-                    Asystent AI
-                  </span>
-
-                  <span className="assistant-grounded">
-                    Oparte na źródłach
-                  </span>
-                </div>
+                <span>Enterprise AI Workspace</span>
 
                 <div className="assistant-message-bubble">
                   <p>
-                    Największej uwagi wymaga obecnie zamówienie
-                    <strong> ORD-1048</strong>.
+                    ORD-1048 ma podwyższone ryzyko terminowe z powodu
+                    dostępności materiału {mainRisk.materialCode}.
                   </p>
 
                   <p>
-                    Głównym ryzykiem jest niski stan komponentu
-                    CMP-204, który może wpłynąć na termin realizacji.
-                    Dostawca potwierdził możliwość częściowej dostawy,
-                    co zmniejsza ryzyko, ale nie eliminuje go całkowicie.
+                    Aktualnie na magazynie znajduje się{' '}
+                    <strong>{mainRisk.onHand} m²</strong>, podczas gdy
+                    zapotrzebowanie dla zamówienia wynosi{' '}
+                    <strong>{mainRisk.required} m²</strong>. Oznacza to
+                    bieżący niedobór{' '}
+                    <strong>{mainRisk.shortage} m²</strong>.
                   </p>
 
                   <p>
-                    Rekomendowane działanie: monitorować potwierdzony
-                    termin dostawy i przygotować decyzję dotyczącą
-                    harmonogramu zamówienia.
+                    Dostawca {mainRisk.supplier} potwierdził pierwszą
+                    partię {mainRisk.firstDeliveryQuantity} m² na{' '}
+                    <strong>{mainRisk.firstDelivery}</strong>.
+                    Planowana wysyłka ORD-1048 pozostaje na{' '}
+                    <strong>{mainRisk.shipmentDate}</strong>.
+                  </p>
+
+                  <p>
+                    Pierwsza dostawa ilościowo pokrywa niedobór,
+                    ale pozostawia tylko krótki bufor na przyjęcie
+                    materiału, dalszą produkcję oraz kontrolę jakości.
+                    Dlatego termin jest nadal możliwy, lecz wymaga
+                    ścisłego monitorowania i zatwierdzonych działań
+                    operacyjnych.
                   </p>
 
                   <div className="assistant-inline-sources">
-                    <span>[S1] ORD-1048</span>
-                    <span>[S2] CMP-204</span>
-                    <span>[S3] Supply update</span>
+                    <span>[S1] TECH-12</span>
+                    <span>[S2] PROD-W38</span>
+                    <span>[S3] PUR-02</span>
+                    <span>[S4] SUP-01</span>
                   </div>
                 </div>
               </div>
@@ -150,90 +154,94 @@ function AssistantPage() {
 
           <div className="assistant-composer">
             <div className="assistant-input-shell">
-              <button
-                aria-label="Dodaj załącznik"
-                className="assistant-icon-button"
-                type="button"
-              >
-                <Paperclip size={18} />
-              </button>
-
               <textarea
                 aria-label="Wiadomość do Asystenta AI"
-                placeholder="Zapytaj o dokumenty, zamówienia lub procesy..."
-                rows={1}
+                placeholder="Zapytaj o zamówienie, materiał, dokument lub proces..."
+                rows={3}
               />
 
-              <button
-                aria-label="Wyślij wiadomość"
-                className="assistant-send-button"
-                type="button"
-              >
-                <ArrowUp size={18} />
-              </button>
+              <div className="assistant-composer-actions">
+                <button
+                  aria-label="Dodaj załącznik"
+                  type="button"
+                >
+                  <Paperclip size={18} />
+                </button>
+
+                <button
+                  aria-label="Wyślij wiadomość"
+                  className="assistant-send-button"
+                  type="button"
+                >
+                  <ArrowUp size={18} />
+                </button>
+              </div>
             </div>
 
-            <span className="assistant-composer-note">
-              AI może odpowiadać wyłącznie na podstawie dostępnych
-              i dozwolonych źródeł.
-            </span>
+            <div className="assistant-composer-note">
+              <ShieldCheck size={14} />
+              Odpowiedzi mogą zawierać wyłącznie informacje
+              dostępne w zatwierdzonych źródłach Workspace.
+            </div>
           </div>
         </article>
 
         <aside className="assistant-sidebar">
-          <article className="panel-card">
+          <article className="panel-card assistant-source-card">
             <div className="panel-header">
               <div>
                 <span className="section-kicker">
-                  Źródła odpowiedzi
+                  Evidence
                 </span>
 
-                <h3>Wykorzystane dane</h3>
+                <h3>Źródła odpowiedzi</h3>
               </div>
 
-              <FileText size={18} />
+              <Search size={18} />
             </div>
 
             <div className="assistant-source-list">
-              {sources.map((source) => (
+              {sources.map((source, index) => (
                 <div
                   className="assistant-source-item"
-                  key={source.reference}
+                  key={source.code}
                 >
-                  <div className="assistant-source-reference">
-                    {source.reference}
+                  <div className="assistant-source-icon">
+                    <FileText size={17} />
                   </div>
 
                   <div>
-                    <strong>{source.title}</strong>
-                    <span>{source.description}</span>
+                    <strong>
+                      [S{index + 1}] {source.code}
+                    </strong>
+
+                    <span>{source.title}</span>
                   </div>
                 </div>
               ))}
             </div>
           </article>
 
-          <article className="panel-card">
+          <article className="panel-card assistant-suggestions">
             <div className="panel-header">
               <div>
                 <span className="section-kicker">
-                  Podpowiedzi
+                  Sugestie
                 </span>
 
-                <h3>Przykładowe pytania</h3>
+                <h3>Zapytaj dalej</h3>
               </div>
-
-              <Search size={18} />
             </div>
 
-            <div className="assistant-suggestions">
+            <div className="assistant-suggestion-list">
               {suggestedQuestions.map((question) => (
                 <button
                   className="assistant-suggestion"
                   key={question}
                   type="button"
                 >
-                  {question}
+                  <Sparkles size={16} />
+                  <span>{question}</span>
                 </button>
               ))}
             </div>

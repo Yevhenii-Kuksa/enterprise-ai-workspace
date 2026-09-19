@@ -9,6 +9,11 @@ import {
   UserRound,
 } from 'lucide-react'
 
+import {
+  currentUser,
+  demoCompany,
+} from '../data/demoData'
+
 import './SettingsPage.css'
 
 function SettingsPage() {
@@ -70,7 +75,7 @@ function SettingsPage() {
                 id="settings-name"
                 readOnly
                 type="text"
-                value="Anna Kowalska"
+                value={currentUser.fullName}
               />
             </div>
 
@@ -86,21 +91,34 @@ function SettingsPage() {
                   id="settings-email"
                   readOnly
                   type="email"
-                  value="anna.kowalska@nexalvora.example"
+                  value={currentUser.email}
                 />
               </div>
             </div>
 
             <div className="settings-field">
+              <label htmlFor="settings-job-title">
+                Stanowisko
+              </label>
+
+              <input
+                id="settings-job-title"
+                readOnly
+                type="text"
+                value={currentUser.jobTitle}
+              />
+            </div>
+
+            <div className="settings-field">
               <label htmlFor="settings-role">
-                Rola
+                Rola systemowa
               </label>
 
               <input
                 id="settings-role"
                 readOnly
                 type="text"
-                value="Administrator"
+                value={currentUser.systemRole}
               />
             </div>
           </div>
@@ -124,7 +142,7 @@ function SettingsPage() {
           <div className="settings-info-list">
             <div className="settings-info-row">
               <span>Organizacja</span>
-              <strong>Nexalvora Industries Sp. z o.o.</strong>
+              <strong>{demoCompany.name}</strong>
             </div>
 
             <div className="settings-info-row">
@@ -134,7 +152,7 @@ function SettingsPage() {
 
             <div className="settings-info-row">
               <span>Środowisko</span>
-              <strong>Production Demo</strong>
+              <strong>{demoCompany.environment}</strong>
             </div>
 
             <div className="settings-info-row">
@@ -297,8 +315,8 @@ function SettingsPage() {
 
             <div className="settings-info-list">
               <div className="settings-info-row">
-                <span>Rola</span>
-                <strong>Administrator</strong>
+                <span>Rola systemowa</span>
+                <strong>{currentUser.systemRole}</strong>
               </div>
 
               <div className="settings-info-row">

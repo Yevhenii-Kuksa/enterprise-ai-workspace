@@ -11,89 +11,97 @@ import {
   Truck,
 } from 'lucide-react'
 
+import {
+  demoOrders,
+  demoSales,
+  mainRisk,
+} from '../data/demoData'
+
 import './ErpPage.css'
 
-const orders = [
+const formatPln = (value: number) =>
+  new Intl.NumberFormat('pl-PL').format(value)
+
+const orderPresentation: Record<
+  string,
   {
-    orderId: 'ORD-1048',
-    customer: 'Baltic Retail Group',
-    lifecycle: 'IN_PROGRESS',
-    delayState: 'AT_RISK',
-    value: '186 400 PLN',
-    dueDate: '23 września 2026',
-    availability: 'Częściowy brak',
+    value: string
+    availability: string
+    availabilityTone: string
+  }
+> = {
+  'ORD-1048': {
+    value: `${formatPln(686_400)} PLN`,
+    availability: `Brak ${mainRisk.shortage} m² ${mainRisk.materialCode}`,
     availabilityTone: 'warning',
   },
-  {
-    orderId: 'ORD-1047',
-    customer: 'Nordline Systems',
-    lifecycle: 'IN_PROGRESS',
-    delayState: 'ON_TIME',
-    value: '142 800 PLN',
-    dueDate: '24 września 2026',
+  'ORD-1047': {
+    value: `${formatPln(420_000)} PLN`,
     availability: 'Dostępne',
     availabilityTone: 'success',
   },
-  {
-    orderId: 'ORD-1046',
-    customer: 'Vistula Components',
-    lifecycle: 'READY',
-    delayState: 'ON_TIME',
-    value: '98 250 PLN',
-    dueDate: '22 września 2026',
+  'ORD-1046': {
+    value: `${formatPln(315_000)} PLN`,
     availability: 'Dostępne',
     availabilityTone: 'success',
   },
-  {
-    orderId: 'ORD-1045',
-    customer: 'Asteron Distribution',
-    lifecycle: 'IN_PROGRESS',
-    delayState: 'DELAYED',
-    value: '221 900 PLN',
-    dueDate: '18 września 2026',
-    availability: 'Brak CMP-118',
+  'ORD-1045': {
+    value: `${formatPln(185_000)} PLN`,
+    availability: 'Monitoruj dostępność',
     availabilityTone: 'error',
   },
-  {
-    orderId: 'ORD-1044',
-    customer: 'Polaris Industrial',
-    lifecycle: 'DRAFT',
-    delayState: 'ON_TIME',
-    value: '74 600 PLN',
-    dueDate: '30 września 2026',
+  'ORD-1044': {
+    value: '—',
     availability: 'Rezerwacja',
     availabilityTone: 'neutral',
   },
-]
+}
+
+const orders = demoOrders.map((order) => ({
+  ...order,
+  ...orderPresentation[order.number],
+}))
 
 const stockAlerts = [
   {
-    code: 'CMP-204',
-    name: 'Moduł sterujący',
-    current: '18 szt.',
-    minimum: '40 szt.',
-    status: 'Niski stan',
+    code: mainRisk.materialCode,
+    name: mainRisk.materialName,
+    current: `${mainRisk.onHand} m²`,
+    minimum: `${mainRisk.safetyStock} m²`,
+    status: `Niedobór ${mainRisk.shortage} m²`,
     tone: 'warning',
   },
   {
-    code: 'CMP-118',
-    name: 'Zespół zasilający',
-    current: '0 szt.',
-    minimum: '12 szt.',
-    status: 'Brak',
-    tone: 'error',
+    code: 'MAT-118',
+    name: 'Galvanized Steel Profile 120',
+    current: '920 mb',
+    minimum: '300 mb',
+    status: 'Dostępne',
+    tone: 'success',
   },
   {
-    code: 'CMP-331',
-    name: 'Obudowa przemysłowa',
-    current: '54 szt.',
-    minimum: '50 szt.',
-    status: 'Monitoruj',
-    tone: 'neutral',
+    code: 'MAT-331',
+    name: 'Fire-rated Gypsum Board',
+    current: '640 m²',
+    minimum: '200 m²',
+    status: 'Dostępne',
+    tone: 'success',
   },
 ]
 
 function ErpPage() {
+  const activeOrders = orders.filter(
+    (order) => order.lifecycle !== 'DRAFT',
+  )
+
+  const atRiskOrders = orders.filter(
+    (order) => order.delayState === 'AT_RISK',
+  ).length
+
+  const delayedOrders = orders.filter(
+    (order) => order.delayState === 'DELAYED',
+  ).length
+
   return (
     <div className="erp-page">
       <section className="erp-hero">
@@ -134,8 +142,10 @@ function ErpPage() {
 
           <div>
             <span>Aktywne zamówienia</span>
-            <strong>24</strong>
-            <small>7 w realizacji dzisiaj</small>
+            <strong>{activeOrders.length}</strong>
+            <small>
+              {orders.length} zamówień w demo dataset
+            </small>
           </div>
         </article>
 
@@ -146,8 +156,10 @@ function ErpPage() {
 
           <div>
             <span>Ryzyko opóźnienia</span>
-            <strong>4</strong>
-            <small>1 zamówienie opóźnione</small>
+            <strong>{atRiskOrders + delayedOrders}</strong>
+            <small>
+              {atRiskOrders} AT RISK · {delayedOrders} DELAYED
+            </small>
           </div>
         </article>
 
@@ -157,9 +169,13 @@ function ErpPage() {
           </div>
 
           <div>
-            <span>Wartość aktywnych</span>
-            <strong>1,28 mln PLN</strong>
-            <small>+8,4% tydzień do tygodnia</small>
+            <span>Wygrana wartość sprzedaży</span>
+            <strong>
+              {formatPln(demoSales.wonValuePln)} PLN
+            </strong>
+            <small>
+              OPP-2026-041 → ORD-1048
+            </small>
           </div>
         </article>
 
@@ -169,9 +185,13 @@ function ErpPage() {
           </div>
 
           <div>
-            <span>Dostawy dziś</span>
-            <strong>6</strong>
-            <small>5 potwierdzonych</small>
+            <span>Dostawa krytyczna</span>
+            <strong>
+              {mainRisk.firstDeliveryQuantity} m²
+            </strong>
+            <small>
+              {mainRisk.materialCode} · {mainRisk.firstDelivery}
+            </small>
           </div>
         </article>
       </section>
@@ -211,10 +231,10 @@ function ErpPage() {
           {orders.map((order) => (
             <div
               className="erp-table-row"
-              key={order.orderId}
+              key={order.number}
             >
               <strong className="erp-order-id">
-                {order.orderId}
+                {order.number}
               </strong>
 
               <span className="erp-customer">
@@ -237,7 +257,10 @@ function ErpPage() {
 
               <div className="erp-due-date">
                 <CalendarDays size={14} />
-                <span>{order.dueDate}</span>
+
+                <span>
+                  {order.deliveryDate ?? 'Nie ustalono'}
+                </span>
               </div>
 
               <span
@@ -315,14 +338,16 @@ function ErpPage() {
 
               <div>
                 <strong>Dane aktualne</strong>
-                <span>Połączenie z ERP działa prawidłowo</span>
+                <span>
+                  Połączenie z Nexalvora ERP działa prawidłowo
+                </span>
               </div>
             </div>
 
             <div className="erp-sync-details">
               <div>
                 <span>Ostatnia synchronizacja</span>
-                <strong>10:46</strong>
+                <strong>12:00</strong>
               </div>
 
               <div>
@@ -331,14 +356,14 @@ function ErpPage() {
               </div>
 
               <div>
-                <span>Opóźnienie danych</span>
-                <strong>&lt; 2 min</strong>
+                <span>Źródło</span>
+                <strong>demo_erp</strong>
               </div>
             </div>
 
             <div className="erp-sync-footer">
               <Clock3 size={14} />
-              Automatyczna synchronizacja aktywna
+              Dane zsynchronizowane z canonical demo dataset
             </div>
           </div>
         </article>

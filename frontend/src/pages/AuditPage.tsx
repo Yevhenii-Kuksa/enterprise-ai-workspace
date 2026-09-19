@@ -8,99 +8,87 @@ import {
   ShieldCheck,
   UserRound,
   Workflow,
-  XCircle,
 } from 'lucide-react'
+
+import { demoAuditEvents } from '../data/demoData'
 
 import './AuditPage.css'
 
-const auditEvents = [
-  {
-    icon: CheckCircle2,
+const eventPresentation = {
+  AI_INSIGHT_CREATED: {
+    icon: Bot,
     tone: 'success',
-    event: 'Zatwierdzono działanie',
-    description:
-      'Anna Kowalska zatwierdziła zmianę terminu realizacji ORD-1048.',
-    actor: 'Anna Kowalska',
-    source: 'Approvals',
-    status: 'SUCCESS',
-    time: '10:42',
-    traceId: 'trc_8a42d1f9',
-    requestId: 'req_51c7a3e2',
-    actionId: 'act_9f31b7c2',
+    actor: 'Enterprise AI Workspace',
+    source: 'AI Intelligence',
+    status: 'Zarejestrowano',
   },
-  {
+  ACTION_PROPOSAL_CREATED: {
+    icon: FileText,
+    tone: 'success',
+    actor: 'Anna Kowalska',
+    source: 'Governance Engine',
+    status: 'Utworzono',
+  },
+  APPROVAL_GRANTED: {
+    icon: UserRound,
+    tone: 'success',
+    actor: 'Human Approval',
+    source: 'Approval Engine',
+    status: 'Zatwierdzono',
+  },
+  ACTION_EXECUTED: {
     icon: Workflow,
     tone: 'success',
-    event: 'Wykonano działanie',
-    description:
-      'Zatwierdzona aktualizacja terminu ORD-1048 została wykonana w ERP.',
-    actor: 'Enterprise AI Workspace',
-    source: 'Governed Execution',
-    status: 'SUCCESS',
-    time: '10:44',
-    traceId: 'trc_8a42d1f9',
-    requestId: 'req_51c7a3e2',
-    actionId: 'act_9f31b7c2',
-  },
-  {
-    icon: Bot,
-    tone: 'info',
-    event: 'Wygenerowano odpowiedź AI',
-    description:
-      'Asystent AI odpowiedział na pytanie dotyczące ryzyka zamówienia ORD-1048.',
-    actor: 'Asystent AI',
-    source: 'AI Answer',
-    status: 'SUCCESS',
-    time: '10:18',
-    traceId: 'trc_3d71f8a5',
-    requestId: 'req_0f62b9c4',
-    actionId: '—',
-  },
-  {
-    icon: FileText,
-    tone: 'info',
-    event: 'Zindeksowano dokument',
-    description:
-      'Dokument Procedura jakości QMS-04 został dodany do bazy wiedzy.',
-    actor: 'Google Drive',
-    source: 'Knowledge Hub',
-    status: 'SUCCESS',
-    time: '09:58',
-    traceId: 'trc_7e43c2b1',
-    requestId: 'req_6a84d1f3',
-    actionId: '—',
-  },
-  {
-    icon: Database,
-    tone: 'warning',
-    event: 'Ograniczona synchronizacja',
-    description:
-      'Google Calendar zwrócił częściowy zestaw danych podczas synchronizacji.',
-    actor: 'Integration Service',
-    source: 'Google Calendar',
-    status: 'DEGRADED',
-    time: '09:31',
-    traceId: 'trc_219d7e46',
-    requestId: 'req_93a1f5c8',
-    actionId: '—',
-  },
-  {
-    icon: XCircle,
-    tone: 'error',
-    event: 'Błąd wykonania',
-    description:
-      'Aktualizacja danych dostawcy SUP-018 została zatrzymana przez błąd systemu źródłowego.',
     actor: 'Governed Execution',
-    source: 'ERP',
-    status: 'ERROR',
-    time: '18 wrz · 16:48',
-    traceId: 'trc_5f20c9d7',
-    requestId: 'req_2b71e9a4',
-    actionId: 'act_71df23a8',
+    source: 'Execution Engine',
+    status: 'Wykonano',
   },
-]
+} as const
+
+const auditEvents = demoAuditEvents.map((event, index) => {
+  const presentation =
+    eventPresentation[
+      event.event as keyof typeof eventPresentation
+    ]
+
+  const sequence = String(index + 1).padStart(3, '0')
+
+  let actionId = '—'
+
+  if (event.event === 'ACTION_PROPOSAL_CREATED') {
+    actionId = `ACT-PROP-${sequence}`
+  }
+
+  if (event.event === 'APPROVAL_GRANTED') {
+    actionId = `APPROVAL-${sequence}`
+  }
+
+  if (event.event === 'ACTION_EXECUTED') {
+    actionId = `EXECUTION-${sequence}`
+  }
+
+  return {
+    ...event,
+    ...presentation,
+    traceId: `trc_ord1048_${sequence}`,
+    requestId: `req_ord1048_${sequence}`,
+    actionId,
+  }
+})
 
 function AuditPage() {
+  const aiEventCount = auditEvents.filter(
+    (event) => event.event === 'AI_INSIGHT_CREATED',
+  ).length
+
+  const approvalCount = auditEvents.filter(
+    (event) => event.event === 'APPROVAL_GRANTED',
+  ).length
+
+  const executionCount = auditEvents.filter(
+    (event) => event.event === 'ACTION_EXECUTED',
+  ).length
+
   return (
     <div className="audit-page">
       <section className="audit-hero">
@@ -117,18 +105,22 @@ function AuditPage() {
             <h2>Audyt</h2>
 
             <p>
-              Pełna historia zdarzeń, decyzji, odpowiedzi AI
-              i kontrolowanych działań w Enterprise AI Workspace.
+              Pełna historia zdarzeń systemowych,
+              decyzji człowieka i kontrolowanych
+              wykonań z zachowaniem identyfikatorów
+              śledzenia Enterprise AI Workspace.
             </p>
           </div>
         </div>
 
         <div className="audit-governance">
-          <ShieldCheck size={18} />
+          <div className="audit-governance-icon">
+            <ShieldCheck size={18} />
+          </div>
 
           <div>
-            <span>Ścieżka audytowa</span>
-            <strong>Aktywna</strong>
+            <span>Governance</span>
+            <strong>Aktywne</strong>
           </div>
         </div>
       </section>
@@ -136,22 +128,22 @@ function AuditPage() {
       <section className="audit-stats">
         <article className="audit-stat-card">
           <span>Zdarzenia dzisiaj</span>
-          <strong>142</strong>
+          <strong>{auditEvents.length}</strong>
         </article>
 
         <article className="audit-stat-card">
-          <span>Operacje AI</span>
-          <strong>38</strong>
+          <span>AI insights</span>
+          <strong>{aiEventCount}</strong>
+        </article>
+
+        <article className="audit-stat-card">
+          <span>Zatwierdzenia</span>
+          <strong>{approvalCount}</strong>
         </article>
 
         <article className="audit-stat-card">
           <span>Wykonania</span>
-          <strong>7</strong>
-        </article>
-
-        <article className="audit-stat-card">
-          <span>Błędy</span>
-          <strong>1</strong>
+          <strong>{executionCount}</strong>
         </article>
       </section>
 
@@ -170,71 +162,90 @@ function AuditPage() {
 
             <input
               aria-label="Szukaj w audycie"
-              placeholder="Szukaj po trace_id, użytkowniku..."
+              placeholder="Szukaj zdarzenia..."
               type="text"
             />
           </div>
         </div>
 
         <div className="audit-list">
-          {auditEvents.map((item) => {
-            const Icon = item.icon
+          {auditEvents.map((event) => {
+            const Icon = event.icon
 
             return (
               <article
                 className="audit-event"
-                key={`${item.traceId}-${item.time}`}
+                key={`${event.time}-${event.event}-${event.description}`}
               >
                 <div
-                  className={`audit-event-icon ${item.tone}`}
+                  className={`audit-event-icon ${event.tone}`}
                 >
                   <Icon size={18} />
                 </div>
 
                 <div className="audit-event-main">
-                  <div className="audit-event-heading">
+                  <div className="audit-event-header">
                     <div>
-                      <span className="audit-event-source">
-                        {item.source}
+                      <span className="audit-event-type">
+                        {event.event}
                       </span>
 
-                      <h4>{item.event}</h4>
+                      <h4>{event.description}</h4>
                     </div>
 
                     <span
-                      className={`audit-event-status ${item.tone}`}
+                      className={`audit-event-status ${event.tone}`}
                     >
-                      {item.status}
+                      <CheckCircle2 size={14} />
+                      {event.status}
                     </span>
                   </div>
 
-                  <p>{item.description}</p>
+                  <div className="audit-event-context">
+                    <div className="audit-context-item">
+                      <UserRound size={15} />
 
-                  <div className="audit-event-meta">
-                    <div>
-                      <UserRound size={14} />
-                      <span>{item.actor}</span>
+                      <div>
+                        <span>Aktor</span>
+                        <strong>{event.actor}</strong>
+                      </div>
                     </div>
 
-                    <div>
-                      <span>{item.time}</span>
+                    <div className="audit-context-item">
+                      <Database size={15} />
+
+                      <div>
+                        <span>Źródło</span>
+                        <strong>{event.source}</strong>
+                      </div>
+                    </div>
+
+                    <div className="audit-context-item">
+                      <History size={15} />
+
+                      <div>
+                        <span>Czas</span>
+                        <strong>
+                          19 września 2026 · {event.time}
+                        </strong>
+                      </div>
                     </div>
                   </div>
 
                   <div className="audit-identifiers">
                     <div>
                       <span>trace_id</span>
-                      <strong>{item.traceId}</strong>
+                      <strong>{event.traceId}</strong>
                     </div>
 
                     <div>
                       <span>request_id</span>
-                      <strong>{item.requestId}</strong>
+                      <strong>{event.requestId}</strong>
                     </div>
 
                     <div>
                       <span>action_id</span>
-                      <strong>{item.actionId}</strong>
+                      <strong>{event.actionId}</strong>
                     </div>
                   </div>
                 </div>

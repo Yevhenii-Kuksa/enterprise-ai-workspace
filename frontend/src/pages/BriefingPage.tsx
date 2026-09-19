@@ -10,73 +10,94 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
+import {
+  demoApprovals,
+  demoKnowledgeDocuments,
+  demoSales,
+  mainRisk,
+} from '../data/demoData'
+
 import './BriefingPage.css'
+
+const formatPln = (value: number) =>
+  new Intl.NumberFormat('pl-PL').format(value)
 
 const priorities = [
   {
     icon: AlertTriangle,
+    title: `Ryzyko terminu ${mainRisk.orderNumber}`,
+    description: (
+      `Brakuje ${mainRisk.shortage} m² materiału ${mainRisk.materialCode}. ` +
+      `Pierwsza partia ${mainRisk.firstDeliveryQuantity} m² ma dotrzeć ` +
+      `${mainRisk.firstDelivery}, a wysyłka jest planowana na ` +
+      `${mainRisk.shipmentDate}.`
+    ),
+    status: 'Wysoki priorytet',
     tone: 'warning',
-    label: 'Wysoki priorytet',
-    title: 'Ryzyko opóźnienia ORD-1048',
-    description:
-      'Brakuje kluczowego komponentu do produkcji. ' +
-      'Aktualny zapas może nie wystarczyć do realizacji ' +
-      'zamówienia w planowanym terminie.',
-    source: '[S1] ERP · ORD-1048',
-  },
-  {
-    icon: PackageSearch,
-    tone: 'info',
-    label: 'Operacje',
-    title: 'Niski stan komponentu CMP-204',
-    description:
-      'Stan magazynowy spadł poniżej poziomu bezpieczeństwa. ' +
-      'Rekomendowane jest sprawdzenie najbliższej dostawy.',
-    source: '[S2] ERP · Magazyn',
   },
   {
     icon: ShoppingCart,
-    tone: 'neutral',
-    label: 'Dostawcy',
-    title: 'Nowa wiadomość od dostawcy',
-    description:
-      'Dostawca potwierdził możliwość częściowej dostawy ' +
-      'komponentów przed końcem tygodnia.',
-    source: '[S3] Gmail · Supply Operations',
+    title: 'Dostawa od BuildCore',
+    description: (
+      `${mainRisk.purchaseOrder}: ${mainRisk.firstDeliveryQuantity} m² ` +
+      `${mainRisk.firstDelivery} oraz ${mainRisk.secondDeliveryQuantity} m² ` +
+      `${mainRisk.secondDelivery}.`
+    ),
+    status: 'Monitorować',
+    tone: 'warning',
+  },
+  {
+    icon: CheckCircle2,
+    title: 'Decyzje operacyjne',
+    description: (
+      `${demoApprovals.filter((item) => item.status === 'APPROVED').length} ` +
+      'działania zatwierdzone, ' +
+      `${demoApprovals.filter((item) => item.status === 'PENDING').length} ` +
+      'oczekuje na decyzję.'
+    ),
+    status: 'Governance aktywny',
+    tone: 'success',
   },
 ]
 
 const businessAreas = [
   {
     icon: TrendingUp,
-    title: 'Sprzedaż',
-    value: '+8,4%',
-    description:
-      'Wartość aktywnych zamówień wzrosła względem poprzedniego tygodnia.',
+    label: 'Sprzedaż',
+    value: `${formatPln(demoSales.openPipelinePln)} PLN`,
+    description: 'Aktywny pipeline bez wygranych szans.',
   },
   {
     icon: Boxes,
-    title: 'Operacje',
-    value: '4 ryzyka',
-    description:
-      'Cztery zamówienia wymagają monitorowania pod kątem terminowości.',
+    label: 'Produkcja',
+    value: mainRisk.orderNumber,
+    description: '24 moduły NX-Mod Technical · status AT RISK.',
   },
   {
-    icon: CheckCircle2,
-    title: 'Decyzje',
-    value: '3 oczekują',
-    description:
-      'Trzy działania wymagają zatwierdzenia przed wykonaniem.',
+    icon: PackageSearch,
+    label: 'Zakupy',
+    value: mainRisk.purchaseOrder,
+    description: `${mainRisk.shortage} m² bieżącego niedoboru MAT-204.`,
+  },
+  {
+    icon: ShoppingCart,
+    label: 'Wygrane',
+    value: `${formatPln(demoSales.wonValuePln)} PLN`,
+    description: 'OPP-2026-041 przekształcone w ORD-1048.',
   },
 ]
 
 function BriefingPage() {
+  const briefingDocuments = demoKnowledgeDocuments.filter((document) =>
+    ['TECH-12', 'PROD-W38', 'PUR-02', 'SUP-01'].includes(document.code),
+  )
+
   return (
     <div className="briefing-page">
       <section className="briefing-hero">
         <div className="briefing-hero-main">
-          <div className="briefing-icon">
-            <Sparkles size={23} />
+          <div className="briefing-hero-icon">
+            <Sparkles size={24} />
           </div>
 
           <div>
@@ -84,182 +105,179 @@ function BriefingPage() {
               Executive intelligence
             </span>
 
-            <h2>Briefing zarządczy</h2>
+            <h2>Briefing operacyjny</h2>
 
             <p>
-              Najważniejsze informacje, ryzyka i działania
-              wymagające uwagi na podstawie aktualnych danych
-              Nexalvora Industries.
+              Najważniejszym tematem jest dziś {mainRisk.orderNumber}.
+              Dostępność {mainRisk.materialCode} pozostaje poniżej
+              zapotrzebowania produkcyjnego, a opóźniona dostawa
+              pozostawia ograniczony bufor przed wysyłką do klienta.
             </p>
           </div>
         </div>
 
-        <div className="briefing-meta">
-          <span>Wygenerowano</span>
-          <strong>19 września 2026 · 10:42</strong>
-          <small>
-            Dane: ERP, Gmail, Google Drive, Calendar
-          </small>
+        <div className="briefing-health">
+          <span>Ogólny status</span>
+
+          <strong>Wymaga uwagi</strong>
+
+          <div className="briefing-health-status">
+            <span className="status-dot warning" />
+            HIGH RISK
+          </div>
         </div>
       </section>
 
       <section className="briefing-summary-card">
-        <div className="briefing-summary-heading">
-          <div>
-            <span className="section-kicker">
-              Podsumowanie AI
-            </span>
-
-            <h3>Najważniejsze na dziś</h3>
-          </div>
-
-          <span className="grounded-badge">
-            Oparte na źródłach
-          </span>
+        <div className="briefing-summary-icon">
+          <Sparkles size={21} />
         </div>
 
-        <p className="briefing-summary-text">
-          Największym ryzykiem operacyjnym pozostaje zamówienie
-          <strong> ORD-1048</strong>. Aktualny poziom zapasu
-          komponentu CMP-204 może wpłynąć na termin realizacji.
-          Jednocześnie dostawca potwierdził możliwość częściowej
-          dostawy, co może ograniczyć ryzyko opóźnienia.
-        </p>
+        <div className="briefing-summary-content">
+          <span className="section-kicker">
+            Podsumowanie AI
+          </span>
 
-        <div className="briefing-source-row">
-          <span>[S1] ERP · ORD-1048</span>
-          <span>[S2] ERP · Magazyn</span>
-          <span>[S3] Gmail · Dostawca</span>
+          <h3>
+            {mainRisk.orderNumber} może wymagać korekty harmonogramu
+          </h3>
+
+          <p>
+            Na magazynie znajduje się {mainRisk.onHand} m² materiału{' '}
+            {mainRisk.materialCode} przy wymaganych {mainRisk.required} m².
+            Pierwsze {mainRisk.firstDeliveryQuantity} m² od{' '}
+            {mainRisk.supplier} ma dotrzeć {mainRisk.firstDelivery}.
+            Planowana wysyłka zamówienia pozostaje na{' '}
+            {mainRisk.shipmentDate}.
+          </p>
+
+          <div className="briefing-source-row">
+            <span>ERP</span>
+            <span>Gmail</span>
+            <span>Knowledge Hub</span>
+            <span>Calendar</span>
+          </div>
         </div>
       </section>
 
-      <section className="briefing-layout">
-        <article className="panel-card briefing-priorities">
-          <div className="panel-header">
-            <div>
-              <span className="section-kicker">
-                Priorytety
-              </span>
-
-              <h3>Wymagają uwagi</h3>
-            </div>
-
-            <span className="items-count">
-              3 pozycje
+      <section className="briefing-section">
+        <div className="panel-header">
+          <div>
+            <span className="section-kicker">
+              Priorytety
             </span>
+
+            <h3>Co wymaga uwagi</h3>
           </div>
 
-          <div className="priority-list">
-            {priorities.map((item) => {
-              const Icon = item.icon
+          <span className="briefing-section-count">
+            {priorities.length} pozycje
+          </span>
+        </div>
 
-              return (
-                <div
-                  className="briefing-priority-item"
-                  key={item.title}
-                >
-                  <div
-                    className={`briefing-priority-icon ${item.tone}`}
-                  >
-                    <Icon size={18} />
-                  </div>
+        <div className="briefing-priority-grid">
+          {priorities.map((priority) => {
+            const Icon = priority.icon
 
-                  <div className="briefing-priority-content">
-                    <span className="priority-category">
-                      {item.label}
-                    </span>
-
-                    <strong>{item.title}</strong>
-
-                    <p>{item.description}</p>
-
-                    <span className="source-reference">
-                      {item.source}
-                    </span>
-                  </div>
-
-                  <button
-                    aria-label={`Otwórz ${item.title}`}
-                    className="briefing-open-button"
-                    type="button"
-                  >
-                    <ArrowUpRight size={17} />
-                  </button>
+            return (
+              <article
+                className="briefing-priority-card"
+                key={priority.title}
+              >
+                <div className={`briefing-priority-icon ${priority.tone}`}>
+                  <Icon size={19} />
                 </div>
-              )
-            })}
-          </div>
-        </article>
 
-        <aside className="briefing-side-column">
-          <article className="panel-card">
-            <div className="panel-header">
-              <div>
-                <span className="section-kicker">
-                  Stan biznesu
-                </span>
+                <div>
+                  <div className="briefing-priority-heading">
+                    <strong>{priority.title}</strong>
 
-                <h3>Obszary</h3>
-              </div>
-            </div>
-
-            <div className="business-area-list">
-              {businessAreas.map((area) => {
-                const Icon = area.icon
-
-                return (
-                  <div
-                    className="business-area"
-                    key={area.title}
-                  >
-                    <div className="business-area-icon">
-                      <Icon size={17} />
-                    </div>
-
-                    <div className="business-area-content">
-                      <span>{area.title}</span>
-                      <strong>{area.value}</strong>
-                      <p>{area.description}</p>
-                    </div>
+                    <span className={`briefing-status ${priority.tone}`}>
+                      {priority.status}
+                    </span>
                   </div>
-                )
-              })}
-            </div>
-          </article>
 
-          <article className="panel-card briefing-documents">
-            <div className="panel-header">
+                  <p>{priority.description}</p>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="briefing-section">
+        <div className="panel-header">
+          <div>
+            <span className="section-kicker">
+              Business overview
+            </span>
+
+            <h3>Obszary biznesowe</h3>
+          </div>
+        </div>
+
+        <div className="briefing-business-grid">
+          {businessAreas.map((area) => {
+            const Icon = area.icon
+
+            return (
+              <article
+                className="briefing-business-card"
+                key={area.label}
+              >
+                <div className="briefing-business-top">
+                  <div className="briefing-business-icon">
+                    <Icon size={19} />
+                  </div>
+
+                  <ArrowUpRight size={17} />
+                </div>
+
+                <span>{area.label}</span>
+                <strong>{area.value}</strong>
+                <p>{area.description}</p>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="panel-card briefing-documents">
+        <div className="panel-header">
+          <div>
+            <span className="section-kicker">
+              Evidence
+            </span>
+
+            <h3>Dokumenty wykorzystane w briefingu</h3>
+          </div>
+
+          <FileText size={19} />
+        </div>
+
+        <div className="briefing-document-list">
+          {briefingDocuments.map((document) => (
+            <div
+              className="briefing-document-row"
+              key={document.code}
+            >
+              <div className="briefing-document-icon">
+                <FileText size={17} />
+              </div>
+
               <div>
-                <span className="section-kicker">
-                  Źródła
+                <strong>{document.title}</strong>
+                <span>
+                  {document.code} · v{document.version}
                 </span>
-
-                <h3>Materiały briefingowe</h3>
               </div>
 
-              <FileText size={18} />
+              <span className="briefing-document-category">
+                {document.category}
+              </span>
             </div>
-
-            <div className="briefing-document-list">
-              <div className="briefing-document">
-                <strong>ORD-1048</strong>
-                <span>ERP · Zamówienie</span>
-              </div>
-
-              <div className="briefing-document">
-                <strong>
-                  Stan magazynowy CMP-204
-                </strong>
-                <span>ERP · Magazyn</span>
-              </div>
-
-              <div className="briefing-document">
-                <strong>Supply update</strong>
-                <span>Gmail · Dostawca</span>
-              </div>
-            </div>
-          </article>
-        </aside>
+          ))}
+        </div>
       </section>
     </div>
   )

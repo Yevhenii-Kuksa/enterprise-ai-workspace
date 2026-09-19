@@ -10,48 +10,72 @@ import {
   XCircle,
 } from 'lucide-react'
 
+import {
+  demoApprovals,
+  mainRisk,
+} from '../data/demoData'
+
 import './ApprovalsPage.css'
 
-const approvals = [
-  {
-    icon: AlertTriangle,
+const approvalPresentation = {
+  'ACT-PROP-001': {
+    icon: Database,
     priority: 'Wysoki',
     priorityTone: 'high',
-    title: 'Zmiana terminu realizacji ORD-1048',
-    description:
-      'Proponowana zmiana terminu realizacji zamówienia z powodu ryzyka opóźnienia dostawy komponentu CMP-204.',
-    actionType: 'Aktualizacja zamówienia',
-    requestedBy: 'Enterprise AI Workspace',
-    createdAt: '19 września 2026 · 10:32',
-    risk: 'Zmiana wpływa na termin dostawy do klienta.',
-  },
-  {
-    icon: Database,
-    priority: 'Normalny',
-    priorityTone: 'normal',
-    title: 'Utworzenie wniosku zakupowego',
-    description:
-      'System przygotował wniosek zakupowy dla komponentu CMP-204 na podstawie aktualnego stanu magazynowego.',
     actionType: 'ERP · Zakupy',
-    requestedBy: 'Workflow operacyjny',
-    createdAt: '19 września 2026 · 09:48',
-    risk: 'Wymagane potwierdzenie przed przekazaniem do ERP.',
+    requestedBy: 'Enterprise AI Workspace',
+    createdAt: '19 września 2026 · 10:35',
+    risk: (
+      `Brak ${mainRisk.shortage} m² ${mainRisk.materialCode} ` +
+      `może wpłynąć na termin wysyłki ${mainRisk.orderNumber}.`
+    ),
   },
-  {
+  'ACT-PROP-002': {
     icon: Workflow,
+    priority: 'Wysoki',
+    priorityTone: 'high',
+    actionType: 'Produkcja · Harmonogram',
+    requestedBy: 'Enterprise AI Workspace',
+    createdAt: '19 września 2026 · 10:40',
+    risk: (
+      `Zmiana harmonogramu wpływa na realizację ` +
+      `${mainRisk.orderNumber} i termin ${mainRisk.shipmentDate}.`
+    ),
+  },
+  'ACT-PROP-003': {
+    icon: AlertTriangle,
     priority: 'Normalny',
     priorityTone: 'normal',
-    title: 'Zmiana statusu zamówienia ORD-1042',
-    description:
-      'Proponowana zmiana statusu po potwierdzeniu kompletności dokumentacji i dostępności towaru.',
-    actionType: 'Workflow · Zamówienia',
-    requestedBy: 'Automatyzacja',
-    createdAt: '19 września 2026 · 09:14',
-    risk: 'Operacja zostanie wykonana dopiero po zatwierdzeniu.',
+    actionType: 'Klient · Komunikacja',
+    requestedBy: 'Enterprise AI Workspace',
+    createdAt: '19 września 2026 · 10:45',
+    risk: (
+      'Komunikat do klienta wymaga zatwierdzenia człowieka ' +
+      'przed wysłaniem.'
+    ),
   },
-]
+} as const
+
+const approvals = demoApprovals.map((approval) => ({
+  ...approval,
+  ...approvalPresentation[
+    approval.code as keyof typeof approvalPresentation
+  ],
+}))
 
 function ApprovalsPage() {
+  const pendingCount = approvals.filter(
+    (approval) => approval.status === 'PENDING',
+  ).length
+
+  const approvedCount = approvals.filter(
+    (approval) => approval.status === 'APPROVED',
+  ).length
+
+  const highPriorityCount = approvals.filter(
+    (approval) => approval.priorityTone === 'high',
+  ).length
+
   return (
     <div className="approvals-page">
       <section className="approvals-hero">
@@ -69,7 +93,8 @@ function ApprovalsPage() {
 
             <p>
               Działania przygotowane przez system, które wymagają
-              decyzji człowieka przed wykonaniem.
+              decyzji człowieka przed wykonaniem lub zostały już
+              zatwierdzone w ramach procesu governance.
             </p>
           </div>
         </div>
@@ -81,41 +106,45 @@ function ApprovalsPage() {
 
           <div>
             <span>Oczekuje na decyzję</span>
-            <strong>3 działania</strong>
+            <strong>
+              {pendingCount}{' '}
+              {pendingCount === 1 ? 'działanie' : 'działania'}
+            </strong>
           </div>
         </div>
       </section>
 
       <section className="approvals-stats">
         <article className="approvals-stat-card">
-          <span>Wszystkie oczekujące</span>
-          <strong>3</strong>
+          <span>Wszystkie propozycje</span>
+          <strong>{approvals.length}</strong>
+        </article>
+
+        <article className="approvals-stat-card">
+          <span>Zatwierdzone</span>
+          <strong>{approvedCount}</strong>
         </article>
 
         <article className="approvals-stat-card">
           <span>Wysoki priorytet</span>
-          <strong>1</strong>
+          <strong>{highPriorityCount}</strong>
         </article>
 
         <article className="approvals-stat-card">
-          <span>Dzisiaj</span>
-          <strong>3</strong>
-        </article>
-
-        <article className="approvals-stat-card">
-          <span>Po terminie</span>
-          <strong>0</strong>
+          <span>Oczekujące</span>
+          <strong>{pendingCount}</strong>
         </article>
       </section>
 
       <section className="approvals-list">
         {approvals.map((approval) => {
           const Icon = approval.icon
+          const isPending = approval.status === 'PENDING'
 
           return (
             <article
               className="panel-card approval-card"
-              key={approval.title}
+              key={approval.code}
             >
               <div className="approval-card-main">
                 <div
@@ -141,13 +170,22 @@ function ApprovalsPage() {
                   <h3>{approval.title}</h3>
 
                   <p className="approval-description">
-                    {approval.description}
+                    {approval.code} · {approval.actionType}
                   </p>
 
                   <div className="approval-meta-grid">
                     <div className="approval-meta-item">
-                      <span>Typ działania</span>
-                      <strong>{approval.actionType}</strong>
+                      <span>Status</span>
+                      <strong>
+                        {isPending ? 'Oczekuje' : 'Zatwierdzone'}
+                      </strong>
+                    </div>
+
+                    <div className="approval-meta-item">
+                      <span>Zatwierdzający</span>
+                      <strong>
+                        {approval.approver ?? 'Nie przypisano'}
+                      </strong>
                     </div>
 
                     <div className="approval-meta-item">
@@ -176,23 +214,36 @@ function ApprovalsPage() {
                   Szczegóły
                 </button>
 
-                <div className="approval-decision-actions">
-                  <button
-                    className="approval-reject-button"
-                    type="button"
-                  >
-                    <XCircle size={17} />
-                    Odrzuć
-                  </button>
+                {isPending ? (
+                  <div className="approval-decision-actions">
+                    <button
+                      className="approval-reject-button"
+                      type="button"
+                    >
+                      <XCircle size={17} />
+                      Odrzuć
+                    </button>
 
-                  <button
-                    className="approval-approve-button"
-                    type="button"
-                  >
-                    <CheckCircle2 size={17} />
-                    Zatwierdź
-                  </button>
-                </div>
+                    <button
+                      className="approval-approve-button"
+                      type="button"
+                    >
+                      <CheckCircle2 size={17} />
+                      Zatwierdź
+                    </button>
+                  </div>
+                ) : (
+                  <div className="approval-decision-actions">
+                    <button
+                      className="approval-approve-button"
+                      disabled
+                      type="button"
+                    >
+                      <CheckCircle2 size={17} />
+                      Zatwierdzone
+                    </button>
+                  </div>
+                )}
               </div>
             </article>
           )

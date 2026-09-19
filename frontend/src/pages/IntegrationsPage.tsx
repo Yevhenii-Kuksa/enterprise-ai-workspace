@@ -10,67 +10,69 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 
+import { demoIntegrations } from '../data/demoData'
+
 import './IntegrationsPage.css'
 
-const integrations = [
-  {
+const integrationPresentation = {
+  gmail: {
     icon: Mail,
-    name: 'Gmail',
-    kind: 'Email',
-    status: 'READY',
-    statusTone: 'ready',
     mode: 'Read-only',
-    records: '18 wiadomości',
-    lastSync: '10:44',
-    capabilities: ['READ_MESSAGES'],
+    records: '3 wiadomości',
+    lastSync: '19 września 2026 · 10:20',
+    description:
+      'Komunikacja z dostawcami i klientami wykorzystywana w analizie operacyjnej.',
   },
-  {
+  'google-drive': {
     icon: Cloud,
-    name: 'Google Drive',
-    kind: 'File storage',
-    status: 'READY',
-    statusTone: 'ready',
     mode: 'Read-only',
-    records: '72 dokumenty',
-    lastSync: '10:41',
-    capabilities: ['READ_FILES'],
+    records: '5 dokumentów',
+    lastSync: '19 września 2026 · 10:15',
+    description:
+      'Dokumentacja techniczna, zakupowa i handlowa Nexalvora.',
   },
-  {
+  sharepoint: {
     icon: FileText,
-    name: 'SharePoint',
-    kind: 'File storage',
-    status: 'READY',
-    statusTone: 'ready',
     mode: 'Read-only',
-    records: '52 dokumenty',
-    lastSync: '10:39',
-    capabilities: ['READ_FILES'],
+    records: '5 dokumentów',
+    lastSync: '19 września 2026 · 10:14',
+    description:
+      'Kontrolowane procedury jakościowe, bezpieczeństwa i produkcji.',
   },
-  {
+  'google-calendar': {
     icon: CalendarDays,
-    name: 'Google Calendar',
-    kind: 'Calendar',
-    status: 'DEGRADED',
-    statusTone: 'degraded',
     mode: 'Read-only',
-    records: '11 wydarzeń',
-    lastSync: '10:31',
-    capabilities: ['READ_CALENDAR_EVENTS'],
+    records: '4 wydarzenia',
+    lastSync: '19 września 2026 · 10:18',
+    description:
+      'Spotkania operacyjne, odbiory materiałów i terminy związane z ORD-1048.',
   },
-  {
+  erp: {
     icon: Database,
-    name: 'ERP',
-    kind: 'ERP',
-    status: 'READY',
-    statusTone: 'ready',
     mode: 'Read-only',
-    records: '24 zamówienia',
-    lastSync: '10:46',
-    capabilities: ['READ_ERP_DATA'],
+    records: '5 zamówień · 6 pozycji magazynowych',
+    lastSync: '19 września 2026 · 12:00',
+    description:
+      'Zamówienia, stany magazynowe i dane operacyjne Nexalvora ERP.',
   },
-]
+} as const
+
+const integrations = demoIntegrations.map((integration) => ({
+  ...integration,
+  ...integrationPresentation[
+    integration.key as keyof typeof integrationPresentation
+  ],
+}))
 
 function IntegrationsPage() {
+  const readyCount = integrations.filter(
+    (integration) => integration.status === 'READY',
+  ).length
+
+  const fileSourceCount = integrations.filter(
+    (integration) => integration.capability === 'READ_FILES',
+  ).length
+
   return (
     <div className="integrations-page">
       <section className="integrations-hero">
@@ -87,9 +89,9 @@ function IntegrationsPage() {
             <h2>Integracje</h2>
 
             <p>
-              Centralny podgląd źródeł danych połączonych
-              z Enterprise AI Workspace oraz ich aktualnego
-              stanu operacyjnego.
+              Połączone źródła danych Nexalvora wykorzystywane
+              przez Enterprise AI Workspace do odczytu wiadomości,
+              dokumentów, kalendarza i danych ERP.
             </p>
           </div>
         </div>
@@ -105,23 +107,23 @@ function IntegrationsPage() {
       </section>
 
       <section className="integrations-stats">
-        <article className="integrations-stat-card">
-          <span>Wszystkie integracje</span>
-          <strong>5</strong>
+        <article className="integration-stat-card">
+          <span>Integracje</span>
+          <strong>{integrations.length}</strong>
         </article>
 
-        <article className="integrations-stat-card">
+        <article className="integration-stat-card">
           <span>Gotowe</span>
-          <strong>4</strong>
+          <strong>{readyCount}</strong>
         </article>
 
-        <article className="integrations-stat-card">
-          <span>Ograniczone</span>
-          <strong>1</strong>
+        <article className="integration-stat-card">
+          <span>Źródła plików</span>
+          <strong>{fileSourceCount}</strong>
         </article>
 
-        <article className="integrations-stat-card">
-          <span>Błędy</span>
+        <article className="integration-stat-card">
+          <span>Tryb zapisu</span>
           <strong>0</strong>
         </article>
       </section>
@@ -129,77 +131,77 @@ function IntegrationsPage() {
       <section className="integrations-grid">
         {integrations.map((integration) => {
           const Icon = integration.icon
+          const isReady = integration.status === 'READY'
 
           return (
             <article
               className="panel-card integration-card"
-              key={integration.name}
+              key={integration.key}
             >
               <div className="integration-card-header">
-                <div className="integration-card-title">
+                <div className="integration-card-heading">
                   <div className="integration-card-icon">
                     <Icon size={20} />
                   </div>
 
                   <div>
-                    <span>{integration.kind}</span>
+                    <span className="section-kicker">
+                      {integration.provider}
+                    </span>
+
                     <h3>{integration.name}</h3>
                   </div>
                 </div>
 
                 <span
-                  className={`integration-card-status ${integration.statusTone}`}
+                  className={`integration-card-status ${
+                    isReady ? 'ready' : 'degraded'
+                  }`}
                 >
-                  {integration.status}
+                  <span className="integration-card-status-dot" />
+                  {isReady ? 'Gotowe' : 'Degraded'}
                 </span>
               </div>
 
+              <p className="integration-card-description">
+                {integration.description}
+              </p>
+
               <div className="integration-card-details">
-                <div className="integration-detail">
+                <div>
                   <span>Tryb</span>
                   <strong>{integration.mode}</strong>
                 </div>
 
-                <div className="integration-detail">
+                <div>
                   <span>Dane</span>
                   <strong>{integration.records}</strong>
                 </div>
 
-                <div className="integration-detail">
+                <div>
                   <span>Ostatnia synchronizacja</span>
                   <strong>{integration.lastSync}</strong>
                 </div>
               </div>
 
               <div className="integration-capabilities">
-                <span className="integration-capabilities-label">
-                  Capabilities
+                <span className="integration-capability">
+                  {integration.capability}
                 </span>
-
-                <div className="integration-capability-list">
-                  {integration.capabilities.map((capability) => (
-                    <span
-                      className="integration-capability"
-                      key={capability}
-                    >
-                      {capability}
-                    </span>
-                  ))}
-                </div>
               </div>
 
               <div className="integration-card-footer">
                 <div className="integration-health">
-                  {integration.status === 'READY' ? (
+                  {isReady ? (
                     <CheckCircle2 size={16} />
                   ) : (
                     <RefreshCw size={16} />
                   )}
 
                   <span>
-                    {integration.status === 'READY'
+                    {isReady
                       ? 'Połączenie działa prawidłowo'
-                      : 'Dane dostępne z ograniczeniem'}
+                      : 'Wymaga ponownej synchronizacji'}
                   </span>
                 </div>
 

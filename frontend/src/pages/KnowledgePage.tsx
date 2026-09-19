@@ -9,76 +9,126 @@ import {
   Share2,
 } from 'lucide-react'
 
+import { demoKnowledgeDocuments } from '../data/demoData'
+
 import './KnowledgePage.css'
 
-const documents = [
+const documentPresentation: Record<
+  string,
   {
+    icon: typeof FileText
+    type: string
+    source: string
+    updated: string
+    pages: string
+  }
+> = {
+  'QMS-04': {
     icon: FileText,
-    title: 'Procedura jakości QMS-04',
+    type: 'PDF',
+    source: 'SharePoint',
+    updated: '19 września 2026',
+    pages: '18 stron',
+  },
+  'BHP-02': {
+    icon: FileText,
+    type: 'PDF',
+    source: 'SharePoint',
+    updated: '18 września 2026',
+    pages: '14 stron',
+  },
+  'PROC-07': {
+    icon: FileText,
+    type: 'DOCX',
+    source: 'Google Drive',
+    updated: '18 września 2026',
+    pages: '9 stron',
+  },
+  'TECH-12': {
+    icon: FileText,
     type: 'PDF',
     source: 'Google Drive',
     updated: '19 września 2026',
-    status: 'Zindeksowany',
-    pages: '18 stron',
+    pages: '26 stron',
   },
-  {
-    icon: FileSpreadsheet,
-    title: 'Plan produkcji — tydzień 38',
-    type: 'XLSX',
-    source: 'SharePoint',
-    updated: '18 września 2026',
-    status: 'Zindeksowany',
-    pages: '6 arkuszy',
-  },
-  {
+  'FIRE-03': {
     icon: FileText,
-    title: 'Instrukcja obsługi reklamacji',
-    type: 'DOCX',
+    type: 'PDF',
     source: 'SharePoint',
-    updated: '17 września 2026',
-    status: 'Zindeksowany',
-    pages: '12 stron',
+    updated: '16 września 2026',
+    pages: '11 stron',
   },
-  {
+  'PUR-02': {
     icon: FileText,
-    title: 'Polityka zakupowa 2026',
     type: 'PDF',
     source: 'Google Drive',
-    updated: '15 września 2026',
-    status: 'Zindeksowany',
-    pages: '24 strony',
+    updated: '17 września 2026',
+    pages: '16 stron',
   },
-  {
+  'SUP-01': {
     icon: FileSpreadsheet,
-    title: 'Lista dostawców strategicznych',
     type: 'XLSX',
     source: 'Google Drive',
-    updated: '14 września 2026',
-    status: 'Zindeksowany',
+    updated: '19 września 2026',
     pages: '4 arkusze',
   },
-]
+  'PROD-W38': {
+    icon: FileSpreadsheet,
+    type: 'XLSX',
+    source: 'SharePoint',
+    updated: '19 września 2026',
+    pages: '6 arkuszy',
+  },
+  'LOG-05': {
+    icon: FileText,
+    type: 'PDF',
+    source: 'SharePoint',
+    updated: '15 września 2026',
+    pages: '13 stron',
+  },
+  'SALES-03': {
+    icon: FileText,
+    type: 'DOCX',
+    source: 'Google Drive',
+    updated: '14 września 2026',
+    pages: '10 stron',
+  },
+}
+
+const documents = demoKnowledgeDocuments.map((document) => ({
+  ...document,
+  ...documentPresentation[document.code],
+  status: 'Zindeksowany',
+}))
 
 const stats = [
   {
     label: 'Dokumenty',
-    value: '128',
+    value: String(demoKnowledgeDocuments.length),
   },
   {
     label: 'Zindeksowane',
-    value: '124',
+    value: String(demoKnowledgeDocuments.length),
   },
   {
     label: 'Źródła danych',
-    value: '3',
+    value: '2',
   },
   {
     label: 'Aktualizacja dziś',
-    value: '6',
+    value: '4',
   },
 ]
 
 function KnowledgePage() {
+  const googleDriveCount = documents.filter(
+    (document) => document.source === 'Google Drive',
+  ).length
+
+  const sharePointCount = documents.filter(
+    (document) => document.source === 'SharePoint',
+  ).length
+
   return (
     <div className="knowledge-page">
       <section className="knowledge-hero">
@@ -95,9 +145,10 @@ function KnowledgePage() {
             <h2>Baza wiedzy</h2>
 
             <p>
-              Dokumenty, procedury i materiały firmowe wykorzystywane
-              przez Enterprise AI Workspace do wyszukiwania wiedzy
-              i generowania odpowiedzi opartych na źródłach.
+              Dokumenty, procedury i materiały firmowe Nexalvora
+              wykorzystywane przez Enterprise AI Workspace do
+              wyszukiwania wiedzy i generowania odpowiedzi
+              opartych na źródłach.
             </p>
           </div>
         </div>
@@ -172,7 +223,7 @@ function KnowledgePage() {
             return (
               <div
                 className="knowledge-table-row"
-                key={document.title}
+                key={document.code}
               >
                 <div className="knowledge-document">
                   <div className="knowledge-document-icon">
@@ -180,10 +231,12 @@ function KnowledgePage() {
                   </div>
 
                   <div>
-                    <strong>{document.title}</strong>
+                    <strong>
+                      {document.code} · {document.title}
+                    </strong>
 
                     <span>
-                      {document.type} · {document.pages}
+                      {document.type} · {document.pages} · v{document.version}
                     </span>
                   </div>
                 </div>
@@ -234,7 +287,7 @@ function KnowledgePage() {
                 <strong>Google Drive</strong>
               </div>
 
-              <span>72 dokumenty</span>
+              <span>{googleDriveCount} dokumentów</span>
             </div>
 
             <div className="knowledge-source-row">
@@ -243,16 +296,7 @@ function KnowledgePage() {
                 <strong>SharePoint</strong>
               </div>
 
-              <span>52 dokumenty</span>
-            </div>
-
-            <div className="knowledge-source-row">
-              <div>
-                <span className="knowledge-provider-dot" />
-                <strong>Upload lokalny</strong>
-              </div>
-
-              <span>4 dokumenty</span>
+              <span>{sharePointCount} dokumentów</span>
             </div>
           </div>
         </article>
@@ -270,18 +314,18 @@ function KnowledgePage() {
 
           <div className="knowledge-rag-content">
             <div className="knowledge-rag-score">
-              97%
+              100%
             </div>
 
             <div>
               <strong>
-                Wysoka gotowość bazy wiedzy
+                Pełna gotowość demonstracyjnej bazy wiedzy
               </strong>
 
               <p>
-                Większość dokumentów została poprawnie
-                przetworzona i może być używana jako
-                źródło odpowiedzi AI.
+                Wszystkie 10 dokumentów posiada treść RAG
+                i zostało przygotowanych do wykorzystania
+                jako źródła odpowiedzi AI.
               </p>
             </div>
           </div>

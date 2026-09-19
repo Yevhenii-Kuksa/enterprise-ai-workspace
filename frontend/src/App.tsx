@@ -20,6 +20,7 @@ import {
   Routes,
 } from 'react-router-dom'
 
+import { currentUser, demoCompany } from './data/demoData'
 import ApprovalsPage from './pages/ApprovalsPage'
 import AssistantPage from './pages/AssistantPage'
 import AuditPage from './pages/AuditPage'
@@ -151,8 +152,8 @@ function Sidebar() {
           <div className="avatar">AK</div>
 
           <div className="user-details">
-            <strong>Anna Kowalska</strong>
-            <span>Administrator</span>
+            <strong>{currentUser.fullName}</strong>
+            <span>{currentUser.jobTitle}</span>
           </div>
 
           <span className="status-dot" />
@@ -171,7 +172,7 @@ function PageHeader({
     <header className="topbar">
       <div>
         <span className="eyebrow">
-          Nexalvora Industries
+          {demoCompany.shortName}
         </span>
 
         <h1>{title}</h1>
@@ -193,7 +194,7 @@ function PageHeader({
           type="button"
         >
           <CalendarDays size={17} />
-          19 września 2026
+          {demoCompany.dateLabel}
         </button>
       </div>
     </header>
