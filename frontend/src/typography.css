@@ -1,0 +1,323 @@
+/* =========================================================
+   Enterprise AI Workspace
+   Global typography standard
+   ========================================================= */
+
+/* ---------- Main application ---------- */
+
+body {
+  font-size: 15px;
+}
+
+/* ---------- Sidebar ---------- */
+
+.brand strong {
+  font-size: 16px;
+}
+
+.brand span {
+  font-size: 12px;
+}
+
+.navigation-label {
+  font-size: 12px;
+}
+
+.nav-item {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nav-badge {
+  font-size: 11px;
+}
+
+.user-details strong {
+  font-size: 14px;
+}
+
+.user-details span {
+  font-size: 12px;
+}
+
+/* ---------- Main top header ---------- */
+
+.eyebrow {
+  font-size: 12px;
+}
+
+.topbar h1 {
+  font-size: 29px;
+}
+
+.search-box input {
+  font-size: 14px;
+}
+
+.date-button {
+  font-size: 13px;
+}
+
+/* ---------- Common section typography ---------- */
+
+.section-kicker {
+  font-size: 12px;
+}
+
+.panel-header h3 {
+  font-size: 17px;
+}
+
+/* ---------- Dashboard ---------- */
+
+.hero-card h2 {
+  font-size: 27px;
+}
+
+.hero-card p {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.hero-summary span {
+  font-size: 12px;
+}
+
+.hero-summary strong {
+  font-size: 18px;
+}
+
+.hero-summary p {
+  font-size: 13px;
+}
+
+.metric-card span {
+  font-size: 13px;
+}
+
+.metric-card strong {
+  font-size: 29px;
+}
+
+.metric-card p {
+  font-size: 13px;
+}
+
+.approval-content strong {
+  font-size: 14px;
+}
+
+.approval-content span {
+  font-size: 13px;
+}
+
+.priority {
+  font-size: 12px;
+}
+
+.integration-row strong {
+  font-size: 14px;
+}
+
+.integration-status {
+  font-size: 12px;
+}
+
+.activity-content strong {
+  font-size: 14px;
+}
+
+.activity-content span {
+  font-size: 13px;
+}
+
+.activity-time {
+  font-size: 12px;
+}
+
+.ai-status-main strong {
+  font-size: 16px;
+}
+
+.ai-status-main p {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.ai-status-footer span {
+  font-size: 12px;
+}
+
+.ai-status-ready {
+  font-size: 12px;
+}
+
+/* ---------- Briefing ---------- */
+
+.briefing-hero h2 {
+  font-size: 27px;
+}
+
+.briefing-hero p {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.briefing-meta span {
+  font-size: 12px;
+}
+
+.briefing-meta strong {
+  font-size: 14px;
+}
+
+.briefing-meta small {
+  font-size: 12px;
+}
+
+.briefing-summary-heading h3 {
+  font-size: 18px;
+}
+
+.grounded-badge {
+  font-size: 12px;
+}
+
+.briefing-summary-text {
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.briefing-source-row span,
+.source-reference {
+  font-size: 12px;
+}
+
+.items-count {
+  font-size: 12px;
+}
+
+.priority-category {
+  font-size: 12px;
+}
+
+.briefing-priority-content strong {
+  font-size: 15px;
+}
+
+.briefing-priority-content p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.business-area-content span {
+  font-size: 12px;
+}
+
+.business-area-content strong {
+  font-size: 16px;
+}
+
+.business-area-content p {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.briefing-document strong {
+  font-size: 14px;
+}
+
+.briefing-document span {
+  font-size: 12px;
+}
+
+/* ---------- Knowledge Hub ---------- */
+
+.knowledge-hero h2 {
+  font-size: 27px;
+}
+
+.knowledge-hero p {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.knowledge-health span {
+  font-size: 12px;
+}
+
+.knowledge-health strong {
+  font-size: 14px;
+}
+
+.knowledge-stat-card span {
+  font-size: 13px;
+}
+
+.knowledge-stat-card strong {
+  font-size: 27px;
+}
+
+.knowledge-toolbar h3 {
+  font-size: 17px;
+}
+
+.knowledge-search input {
+  font-size: 13px;
+}
+
+.knowledge-filter-button {
+  font-size: 13px;
+}
+
+.knowledge-table-head {
+  font-size: 12px;
+}
+
+.knowledge-document strong {
+  font-size: 14px;
+}
+
+.knowledge-document span {
+  font-size: 12px;
+}
+
+.knowledge-source {
+  font-size: 13px;
+}
+
+.knowledge-updated {
+  font-size: 13px;
+}
+
+.knowledge-status {
+  font-size: 12px;
+}
+
+.knowledge-source-row strong {
+  font-size: 14px;
+}
+
+.knowledge-source-row > span {
+  font-size: 12px;
+}
+
+.knowledge-rag-score {
+  font-size: 22px;
+}
+
+.knowledge-rag-content strong {
+  font-size: 14px;
+}
+
+.knowledge-rag-content p {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* ---------- Buttons ---------- */
+
+.primary-button,
+.text-button {
+  font-size: 13px;
+}

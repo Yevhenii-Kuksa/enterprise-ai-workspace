@@ -1,0 +1,363 @@
+.executions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.executions-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 26px 28px;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background:
+    radial-gradient(
+      circle at 84% 8%,
+      rgba(59, 130, 246, 0.11),
+      transparent 32%
+    ),
+    #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.executions-hero-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.executions-hero-icon {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.executions-hero h2 {
+  margin: 6px 0 8px;
+  color: #0f172a;
+  font-size: 27px;
+  letter-spacing: -0.025em;
+}
+
+.executions-hero p {
+  max-width: 720px;
+  margin: 0;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.executions-summary {
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 13px;
+  background: #eff6ff;
+}
+
+.executions-summary-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #2563eb;
+}
+
+.executions-summary span,
+.executions-summary strong {
+  display: block;
+}
+
+.executions-summary span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.executions-summary strong {
+  margin-top: 3px;
+  color: #1e3a8a;
+  font-size: 14px;
+}
+
+.executions-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.executions-stat-card {
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 7px 20px rgba(15, 23, 42, 0.03);
+}
+
+.executions-stat-card span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.executions-stat-card strong {
+  display: block;
+  margin-top: 6px;
+  color: #0f172a;
+  font-size: 27px;
+}
+
+.executions-table-card {
+  overflow: hidden;
+}
+
+.executions-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 8px;
+}
+
+.executions-table-header h3 {
+  margin: 4px 0 0;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.executions-count {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.executions-table {
+  width: 100%;
+}
+
+.executions-table-head,
+.executions-table-row {
+  display: grid;
+  grid-template-columns:
+    minmax(310px, 1.55fr)
+    minmax(145px, 0.75fr)
+    minmax(140px, 0.7fr)
+    minmax(150px, 0.75fr)
+    minmax(170px, 0.85fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.executions-table-head {
+  padding: 13px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.executions-table-row {
+  position: relative;
+  padding: 16px 8px 70px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.executions-table-row:last-child {
+  border-bottom: 0;
+}
+
+.execution-main {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.execution-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.execution-icon.success {
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+.execution-icon.replayed {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.execution-icon.error {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.execution-main strong,
+.execution-main span {
+  display: block;
+}
+
+.execution-main strong {
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.execution-main span {
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.execution-system {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.execution-approved-by {
+  color: #475569;
+  font-size: 13px;
+}
+
+.execution-status {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.execution-status.success {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.execution-status.replayed {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.execution-status.error {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.execution-time {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.execution-trace {
+  position: absolute;
+  left: 59px;
+  right: 8px;
+  bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.execution-trace > div {
+  padding: 9px 11px;
+  border: 1px solid #f1f5f9;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.execution-trace span,
+.execution-trace strong {
+  display: block;
+}
+
+.execution-trace span {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.execution-trace strong {
+  margin-top: 3px;
+  overflow: hidden;
+  color: #475569;
+  font-family:
+    "SFMono-Regular",
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .executions-table {
+    overflow-x: auto;
+  }
+
+  .executions-table-head,
+  .executions-table-row {
+    min-width: 1020px;
+  }
+}
+
+@media (max-width: 900px) {
+  .executions-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .executions-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .executions-summary {
+    min-width: 0;
+  }
+
+  .executions-table-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 620px) {
+  .executions-hero {
+    padding: 22px 20px;
+  }
+
+  .executions-stats {
+    grid-template-columns: 1fr;
+  }
+}
