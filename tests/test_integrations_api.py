@@ -14,6 +14,7 @@ from app.integrations.schemas import (
     IntegrationStatus,
 )
 from app.integrations.service import (
+    IntegrationProviderFailureError,
     IntegrationProviderUnavailableError,
     IntegrationSourceMismatchError,
     IntegrationUnavailableError,
@@ -122,6 +123,17 @@ class ProviderUnavailableIntegrationService:
     ) -> list[IntegrationRecord]:
         raise IntegrationProviderUnavailableError(
             f"Provider is not available: {integration_key}"
+        )
+
+
+class FailingIntegrationService:
+    def fetch_records(
+        self,
+        *,
+        integration_key: str,
+    ) -> list[IntegrationRecord]:
+        raise IntegrationProviderFailureError(
+            f"Integration provider request failed: {integration_key}"
         )
 
 
@@ -302,6 +314,36 @@ def test_list_integration_records_returns_503_when_provider_unavailable() -> Non
     assert response.status_code == 503
     assert response.json() == {
         "detail": "Provider is not available: gmail"
+    }
+
+
+def test_integration_records_maps_provider_failure_to_502() -> None:
+    user = make_user(
+        permissions={
+            "integration.read",
+        }
+    )
+
+    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_integration_service] = (
+        lambda: FailingIntegrationService()
+    )
+
+    try:
+        client = TestClient(app)
+
+        response = client.get(
+            "/api/integrations/google-drive/records",
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 502
+    assert response.json() == {
+        "detail": (
+            "Integration provider request failed: "
+            "google-drive"
+        )
     }
 
 

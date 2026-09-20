@@ -21,6 +21,10 @@ class IntegrationProviderUnavailableError(IntegrationServiceError):
     pass
 
 
+class IntegrationProviderFailureError(IntegrationServiceError):
+    pass
+
+
 class IntegrationSourceMismatchError(IntegrationServiceError):
     pass
 
@@ -62,9 +66,14 @@ class IntegrationService:
                 f"Provider is not available: {integration_key}"
             ) from exc
 
-        records = list(
-            provider.fetch_records()
-        )
+        try:
+            records = list(
+                provider.fetch_records()
+            )
+        except Exception as exc:
+            raise IntegrationProviderFailureError(
+                f"Integration provider request failed: {integration_key}"
+            ) from exc
 
         for record in records:
             if record.source_system != integration_key:

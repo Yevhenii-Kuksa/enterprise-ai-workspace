@@ -10,6 +10,7 @@ from app.integrations.schemas import (
     IntegrationRecord,
 )
 from app.integrations.service import (
+    IntegrationProviderFailureError,
     IntegrationProviderUnavailableError,
     IntegrationService,
     IntegrationSourceMismatchError,
@@ -38,6 +39,15 @@ class FakeProvider:
                 fetched_at=datetime.now(UTC),
             )
         ]
+
+
+class FailingProvider:
+    def fetch_records(
+        self,
+    ) -> list[IntegrationRecord]:
+        raise ConnectionError(
+            "Synthetic provider failure."
+        )
 
 
 def definition(
@@ -146,6 +156,34 @@ def test_service_rejects_source_mismatch() -> None:
 
     with pytest.raises(
         IntegrationSourceMismatchError
+    ):
+        service.fetch_records(
+            integration_key="google-drive",
+        )
+
+
+def test_service_normalizes_provider_execution_failure() -> None:
+    integrations = IntegrationRegistry(
+        [definition()]
+    )
+
+    providers = ProviderRegistry()
+    providers.register(
+        "google-drive",
+        FailingProvider(),
+    )
+
+    service = IntegrationService(
+        integrations,
+        providers,
+    )
+
+    with pytest.raises(
+        IntegrationProviderFailureError,
+        match=(
+            "Integration provider request failed: "
+            "google-drive"
+        ),
     ):
         service.fetch_records(
             integration_key="google-drive",

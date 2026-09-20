@@ -12,6 +12,7 @@ from app.integrations.dependencies import (
     get_integration_service,
 )
 from app.integrations.service import (
+    IntegrationProviderFailureError,
     IntegrationProviderUnavailableError,
     IntegrationService,
     IntegrationSourceMismatchError,
@@ -74,6 +75,11 @@ def list_integration_records(
     except IntegrationProviderUnavailableError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except IntegrationProviderFailureError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(exc),
         ) from exc
     except IntegrationSourceMismatchError as exc:
