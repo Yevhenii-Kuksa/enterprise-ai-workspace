@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,13 +10,17 @@ class Settings(BaseSettings):
 
     embedding_provider: Literal["openai"] = "openai"
     embedding_model: str = "text-embedding-3-small"
-    embedding_dimensions: int = 1536
+    embedding_dimensions: int = Field(default=1536, gt=0)
 
     ai_answer_provider: Literal["openai"] = "openai"
     ai_answer_model: str = "gpt-5.6-luna"
 
-    ai_reliability_max_evidence_distance: float = 0.35
-    ai_reliability_max_source_age_days: int = 30
+    ai_reliability_max_evidence_distance: float = Field(
+        default=0.35,
+        ge=0.0,
+        le=1.0,
+    )
+    ai_reliability_max_source_age_days: int = Field(default=30, gt=0)
 
     openai_api_key: SecretStr | None = None
 
