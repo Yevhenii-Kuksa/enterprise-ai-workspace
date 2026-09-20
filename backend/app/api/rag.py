@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.ai.provider import AIProviderError
 from app.ai.rag_service import answer_rag_query_from_settings
 from app.api.schemas import (
     RagCitationResponse,
@@ -13,6 +14,7 @@ from app.core.config import Settings, get_settings
 from app.core.trace_context import TraceContext
 from app.core.trace_dependencies import get_trace_context
 from app.db.dependencies import get_db
+from app.embeddings.provider import EmbeddingProviderError
 from app.security.current_user import CurrentUser
 from app.security.dependencies import get_current_user
 
@@ -46,6 +48,11 @@ def query_rag(
             settings=settings,
             trace_context=trace_context,
         )
+    except (AIProviderError, EmbeddingProviderError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service is temporarily unavailable.",
+        ) from exc
     except ValueError as exc:
         message = str(exc)
 

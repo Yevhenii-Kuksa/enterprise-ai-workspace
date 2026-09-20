@@ -1,6 +1,6 @@
 from openai import OpenAI
 
-from app.ai.provider import AIAnswerResult
+from app.ai.provider import AIAnswerResult, AIProviderError
 
 
 class OpenAIAnswerProvider:
@@ -51,11 +51,16 @@ class OpenAIAnswerProvider:
         system_prompt: str,
         user_prompt: str,
     ) -> AIAnswerResult:
-        response = self._client.responses.create(
-            model=self._model_name,
-            instructions=system_prompt,
-            input=user_prompt,
-        )
+        try:
+            response = self._client.responses.create(
+                model=self._model_name,
+                instructions=system_prompt,
+                input=user_prompt,
+            )
+        except Exception as exc:
+            raise AIProviderError(
+                "AI answer provider request failed."
+            ) from exc
 
         return AIAnswerResult(
             text=response.output_text,

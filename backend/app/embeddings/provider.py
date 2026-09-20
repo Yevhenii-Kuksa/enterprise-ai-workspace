@@ -2,6 +2,10 @@ from dataclasses import dataclass
 from typing import Protocol
 
 
+class EmbeddingProviderError(RuntimeError):
+    """Raised when an external embedding provider cannot complete a request."""
+
+
 @dataclass(frozen=True, slots=True)
 class EmbeddingResult:
     model_name: str

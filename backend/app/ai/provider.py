@@ -2,6 +2,10 @@ from dataclasses import dataclass
 from typing import Protocol
 
 
+class AIProviderError(RuntimeError):
+    """Raised when an external AI provider cannot complete a request."""
+
+
 @dataclass(frozen=True, slots=True)
 class AIAnswerResult:
     text: str

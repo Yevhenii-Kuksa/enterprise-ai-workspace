@@ -1,5 +1,7 @@
 from openai import OpenAI
 
+from app.embeddings.provider import EmbeddingProviderError
+
 
 class OpenAIEmbeddingProvider:
     def __init__(
@@ -59,11 +61,16 @@ class OpenAIEmbeddingProvider:
         if not texts:
             return []
 
-        response = self._client.embeddings.create(
-            model=self._model_name,
-            input=texts,
-            dimensions=self._dimensions,
-        )
+        try:
+            response = self._client.embeddings.create(
+                model=self._model_name,
+                input=texts,
+                dimensions=self._dimensions,
+            )
+        except Exception as exc:
+            raise EmbeddingProviderError(
+                "Embedding provider request failed."
+            ) from exc
 
         embeddings = sorted(
             response.data,
