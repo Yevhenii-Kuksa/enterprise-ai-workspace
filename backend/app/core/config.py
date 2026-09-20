@@ -1,12 +1,13 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     database_url: str
+    app_environment: Literal["development", "test", "production"] = "development"
 
     embedding_provider: Literal["openai"] = "openai"
     embedding_model: str = "text-embedding-3-small"
@@ -29,6 +30,21 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @model_validator(mode="after")
+    def validate_production_configuration(self) -> "Settings":
+        if self.app_environment != "production":
+            return self
+
+        if self.openai_api_key is None or not self.openai_api_key.get_secret_value().strip():
+            raise ValueError("OPENAI_API_KEY is required in production")
+
+        if "change_me" in self.database_url.lower():
+            raise ValueError(
+                "DATABASE_URL contains an unsafe placeholder credential"
+            )
+
+        return self
 
 
 @lru_cache
