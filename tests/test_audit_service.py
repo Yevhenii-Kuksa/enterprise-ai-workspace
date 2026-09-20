@@ -2,7 +2,11 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from app.audit.service import list_audit_events, record_audit_event
+from app.audit.service import (
+    AuditQueryValidationError,
+    list_audit_events,
+    record_audit_event,
+)
 from app.core.trace_context import TraceContext
 from app.db.session import SessionLocal
 from app.models.audit_event import AuditEvent
@@ -286,11 +290,46 @@ def test_list_audit_events_rejects_invalid_limit() -> None:
 
     with SessionLocal() as db:
         with pytest.raises(
-            ValueError,
+            AuditQueryValidationError,
             match="Audit event limit must be between 1 and 500.",
         ):
             list_audit_events(
                 db,
                 current_user=current_user,
                 limit=501,
+            )
+
+
+def test_list_audit_events_rejects_reversed_date_range() -> None:
+    current_user = _current_user(
+        user_id=uuid.uuid4(),
+        organization_id=uuid.uuid4(),
+    )
+
+    created_from = datetime(
+        2026,
+        9,
+        30,
+        tzinfo=UTC,
+    )
+    created_to = datetime(
+        2026,
+        9,
+        1,
+        tzinfo=UTC,
+    )
+
+    with SessionLocal() as db:
+        with pytest.raises(
+            AuditQueryValidationError,
+            match=(
+                "Audit created_from must be earlier than "
+                "or equal to created_to."
+            ),
+        ):
+            list_audit_events(
+                db,
+                current_user=current_user,
+                created_from=created_from,
+                created_to=created_to,
             )

@@ -10,6 +10,10 @@ from app.models.audit_event import AuditEvent
 from app.security.current_user import CurrentUser
 
 
+class AuditQueryValidationError(ValueError):
+    pass
+
+
 def record_audit_event(
     session: Session,
     *,
@@ -51,6 +55,15 @@ def build_audit_events_query(
     created_from: datetime | None = None,
     created_to: datetime | None = None,
 ) -> Select[tuple[AuditEvent]]:
+    if (
+        created_from is not None
+        and created_to is not None
+        and created_from > created_to
+    ):
+        raise AuditQueryValidationError(
+            "Audit created_from must be earlier than or equal to created_to."
+        )
+
     query = select(AuditEvent).where(
         AuditEvent.organization_id
         == current_user.organization_id
@@ -96,7 +109,7 @@ def list_audit_events(
     limit: int = 100,
 ) -> list[AuditEvent]:
     if limit < 1 or limit > 500:
-        raise ValueError(
+        raise AuditQueryValidationError(
             "Audit event limit must be between 1 and 500."
         )
 

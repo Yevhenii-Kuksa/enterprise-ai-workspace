@@ -2,6 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from unittest.mock import patch
 
+from app.audit.service import AuditQueryValidationError
 from app.db.dependencies import get_db
 from app.main import app
 from app.models.audit_event import AuditEvent
@@ -257,3 +258,36 @@ def test_list_audit_events_rejects_limit_over_500() -> None:
 
     assert response.status_code == 422
     mocked_list_audit_events.assert_not_called()
+
+
+def test_list_audit_events_rejects_reversed_date_range() -> None:
+    app.dependency_overrides[get_db] = _override_db
+    app.dependency_overrides[get_current_user] = _audit_reader
+
+    try:
+        with patch(
+            "app.api.audit.list_audit_events",
+            side_effect=AuditQueryValidationError(
+                "Audit created_from must be earlier than "
+                "or equal to created_to."
+            ),
+        ):
+            client = TestClient(app)
+
+            response = client.get(
+                "/api/audit/events",
+                params={
+                    "created_from": "2026-09-30T00:00:00Z",
+                    "created_to": "2026-09-01T00:00:00Z",
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": (
+            "Audit created_from must be earlier than "
+            "or equal to created_to."
+        )
+    }
