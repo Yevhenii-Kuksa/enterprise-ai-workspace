@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.approvals.service import ApprovalNotFoundError
 from app.core.trace_context import TraceContext
+from app.core.trace_dependencies import get_trace_context
 from app.execution.dependencies import ExecutionUser
 from app.execution.schemas import ActionExecutionResponse
 from app.execution.service import (
@@ -39,13 +40,17 @@ def execute_approved_proposal(
         ExecutionService,
         Depends(get_execution_service),
     ],
+    trace_context: Annotated[
+        TraceContext,
+        Depends(get_trace_context),
+    ],
 ) -> ActionExecutionResponse:
     try:
         execution = service.execute_approved_proposal(
             organization_id=current_user.organization_id,
             proposal_id=proposal_id,
             current_user=current_user,
-            trace_context=TraceContext.create(),
+            trace_context=trace_context,
         )
 
     except ApprovalNotFoundError as exc:
