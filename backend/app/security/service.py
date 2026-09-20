@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.permission import Permission
 from app.models.role import Role
 from app.models.role_permission import role_permissions
+from app.models.user import User
 from app.models.user_role import user_roles
 
 
@@ -27,7 +28,14 @@ def get_user_permission_codes(
             user_roles,
             user_roles.c.role_id == Role.id,
         )
-        .where(user_roles.c.user_id == user_id)
+        .join(
+            User,
+            User.id == user_roles.c.user_id,
+        )
+        .where(
+            user_roles.c.user_id == user_id,
+            Role.organization_id == User.organization_id,
+        )
         .distinct()
     )
 
