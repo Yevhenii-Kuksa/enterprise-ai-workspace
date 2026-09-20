@@ -46,3 +46,19 @@ def test_create_ai_answer_provider_uses_model_from_settings() -> None:
     provider = create_ai_answer_provider(settings)
 
     assert provider.model_name == "custom-answer-model"
+
+def test_create_ai_answer_provider_uses_request_controls_from_settings() -> None:
+    settings = Settings(
+        database_url="postgresql+psycopg://test:test@localhost/test",
+        ai_answer_provider="openai",
+        ai_answer_model="test-answer-model",
+        openai_api_key=SecretStr("test-key"),
+        openai_timeout_seconds=12.5,
+        openai_max_retries=4,
+    )
+
+    provider = create_ai_answer_provider(settings)
+
+    assert isinstance(provider, OpenAIAnswerProvider)
+    assert provider.timeout_seconds == 12.5
+    assert provider.max_retries == 4

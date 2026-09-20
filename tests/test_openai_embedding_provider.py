@@ -142,3 +142,43 @@ def test_openai_embedding_provider_sorts_vectors_by_index() -> None:
             "dimensions": 3,
         }
     ]
+
+def test_openai_embedding_provider_exposes_request_controls() -> None:
+    provider = OpenAIEmbeddingProvider(
+        api_key="test-key",
+        model_name="test-model",
+        dimensions=3,
+        timeout_seconds=15.0,
+        max_retries=3,
+    )
+
+    assert provider.timeout_seconds == 15.0
+    assert provider.max_retries == 3
+
+
+def test_openai_embedding_provider_rejects_invalid_timeout() -> None:
+    try:
+        OpenAIEmbeddingProvider(
+            api_key="test-key",
+            model_name="test-model",
+            dimensions=3,
+            timeout_seconds=0,
+        )
+    except ValueError as exc:
+        assert str(exc) == "OpenAI timeout must be greater than zero."
+    else:
+        raise AssertionError("Expected ValueError.")
+
+
+def test_openai_embedding_provider_rejects_invalid_max_retries() -> None:
+    try:
+        OpenAIEmbeddingProvider(
+            api_key="test-key",
+            model_name="test-model",
+            dimensions=3,
+            max_retries=6,
+        )
+    except ValueError as exc:
+        assert str(exc) == "OpenAI max retries must be between 0 and 5."
+    else:
+        raise AssertionError("Expected ValueError.")

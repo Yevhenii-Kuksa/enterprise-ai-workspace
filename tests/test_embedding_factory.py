@@ -50,3 +50,20 @@ def test_create_embedding_provider_uses_model_and_dimensions_from_settings() -> 
 
     assert provider.model_name == "custom-embedding-model"
     assert provider.dimensions == 1536
+
+def test_create_embedding_provider_uses_request_controls_from_settings() -> None:
+    settings = Settings(
+        database_url="postgresql+psycopg://test:test@localhost/test",
+        embedding_provider="openai",
+        embedding_model="test-model",
+        embedding_dimensions=3,
+        openai_api_key=SecretStr("test-key"),
+        openai_timeout_seconds=12.5,
+        openai_max_retries=4,
+    )
+
+    provider = create_embedding_provider(settings)
+
+    assert isinstance(provider, OpenAIEmbeddingProvider)
+    assert provider.timeout_seconds == 12.5
+    assert provider.max_retries == 4

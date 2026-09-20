@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     ai_reliability_max_source_age_days: int = Field(default=30, gt=0)
 
     openai_api_key: SecretStr | None = None
+    openai_timeout_seconds: float = Field(default=30.0, gt=0)
+    openai_max_retries: int = Field(default=2, ge=0, le=5)
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -36,7 +38,10 @@ class Settings(BaseSettings):
         if self.app_environment != "production":
             return self
 
-        if self.openai_api_key is None or not self.openai_api_key.get_secret_value().strip():
+        if (
+            self.openai_api_key is None
+            or not self.openai_api_key.get_secret_value().strip()
+        ):
             raise ValueError("OPENAI_API_KEY is required in production")
 
         if "change_me" in self.database_url.lower():

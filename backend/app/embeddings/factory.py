@@ -16,6 +16,8 @@ def create_embedding_provider(
             api_key=settings.openai_api_key.get_secret_value(),
             model_name=settings.embedding_model,
             dimensions=settings.embedding_dimensions,
+            timeout_seconds=settings.openai_timeout_seconds,
+            max_retries=settings.openai_max_retries,
         )
 
     raise ValueError(

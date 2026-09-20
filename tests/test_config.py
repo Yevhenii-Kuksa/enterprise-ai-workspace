@@ -96,3 +96,37 @@ def test_production_environment_rejects_placeholder_database_credentials() -> No
             app_environment="production",
             openai_api_key="sk-production-test-key",
         )
+
+def test_settings_accept_valid_openai_request_controls() -> None:
+    settings = Settings(
+        database_url=TEST_DATABASE_URL,
+        openai_timeout_seconds=30.0,
+        openai_max_retries=2,
+    )
+
+    assert settings.openai_timeout_seconds == 30.0
+    assert settings.openai_max_retries == 2
+
+
+@pytest.mark.parametrize(
+    ("field_name", "invalid_value"),
+    [
+        ("openai_timeout_seconds", 0),
+        ("openai_timeout_seconds", -1.0),
+        ("openai_max_retries", -1),
+        ("openai_max_retries", 6),
+    ],
+)
+def test_settings_reject_invalid_openai_request_controls(
+    field_name: str,
+    invalid_value: int | float,
+) -> None:
+    overrides: dict[str, Any] = {
+        field_name: invalid_value,
+    }
+
+    with pytest.raises(ValidationError):
+        Settings(
+            database_url=TEST_DATABASE_URL,
+            **overrides,
+        )
