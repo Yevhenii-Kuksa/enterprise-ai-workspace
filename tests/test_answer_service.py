@@ -1,4 +1,5 @@
-﻿import uuid
+﻿import logging
+import uuid
 from datetime import UTC, datetime, timedelta
 
 from app.ai.answer_service import (
@@ -341,26 +342,34 @@ def test_generate_grounded_answer_emits_correlated_ai_trace(
     context = _rag_context()
     trace_context = TraceContext.create()
 
-    with caplog.at_level(
-        "INFO",
-        logger="enterprise_ai_workspace.ai",
-    ):
-        result = generate_grounded_answer(
-            provider=provider,
-            context=context,
-            evaluated_at=datetime(
-                2026,
-                9,
-                15,
-                12,
-                0,
-                tzinfo=UTC,
-            ),
-            max_evidence_distance=0.35,
-            max_source_age=timedelta(days=30),
-            conflict_checked=True,
-            trace_context=trace_context,
-        )
+    application_logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+    application_logger.addHandler(caplog.handler)
+
+    try:
+        with caplog.at_level(
+            "INFO",
+            logger="enterprise_ai_workspace.ai",
+        ):
+            result = generate_grounded_answer(
+                provider=provider,
+                context=context,
+                evaluated_at=datetime(
+                    2026,
+                    9,
+                    15,
+                    12,
+                    0,
+                    tzinfo=UTC,
+                ),
+                max_evidence_distance=0.35,
+                max_source_age=timedelta(days=30),
+                conflict_checked=True,
+                trace_context=trace_context,
+            )
+    finally:
+        application_logger.removeHandler(caplog.handler)
 
     matching_records = [
         record
@@ -407,18 +416,26 @@ def test_generate_grounded_answer_emits_ai_failure_trace(
     context = _rag_context()
     trace_context = TraceContext.create()
 
-    with caplog.at_level(
-        "ERROR",
-        logger="enterprise_ai_workspace.ai",
-    ):
-        try:
-            generate_grounded_answer(
-                provider=provider,
-                context=context,
-                trace_context=trace_context,
-            )
-        except TimeoutError:
-            pass
+    application_logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+    application_logger.addHandler(caplog.handler)
+
+    try:
+        with caplog.at_level(
+            "ERROR",
+            logger="enterprise_ai_workspace.ai",
+        ):
+            try:
+                generate_grounded_answer(
+                    provider=provider,
+                    context=context,
+                    trace_context=trace_context,
+                )
+            except TimeoutError:
+                pass
+    finally:
+        application_logger.removeHandler(caplog.handler)
 
     matching_records = [
         record
@@ -447,20 +464,28 @@ def test_generate_grounded_answer_emits_reliability_trace(
     context = _rag_context()
     trace_context = TraceContext.create()
 
-    with caplog.at_level(
-        "INFO",
-        logger="enterprise_ai_workspace.ai",
-    ):
-        generate_grounded_answer(
-            provider=provider,
-            context=context,
-            evaluated_at=datetime.now(UTC),
-            max_evidence_distance=1.0,
-            max_source_age=timedelta(days=365),
-            conflict_count=0,
-            conflict_checked=True,
-            trace_context=trace_context,
-        )
+    application_logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+    application_logger.addHandler(caplog.handler)
+
+    try:
+        with caplog.at_level(
+            "INFO",
+            logger="enterprise_ai_workspace.ai",
+        ):
+            generate_grounded_answer(
+                provider=provider,
+                context=context,
+                evaluated_at=datetime.now(UTC),
+                max_evidence_distance=1.0,
+                max_source_age=timedelta(days=365),
+                conflict_count=0,
+                conflict_checked=True,
+                trace_context=trace_context,
+            )
+    finally:
+        application_logger.removeHandler(caplog.handler)
 
     matching_records = [
         record

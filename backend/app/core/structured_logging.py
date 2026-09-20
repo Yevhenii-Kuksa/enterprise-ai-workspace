@@ -38,7 +38,10 @@ class JsonFormatter(logging.Formatter):
 
         for field_name in TELEMETRY_FIELDS:
             if hasattr(record, field_name):
-                payload[field_name] = getattr(record, field_name)
+                payload[field_name] = getattr(
+                    record,
+                    field_name,
+                )
 
         return json.dumps(
             payload,
@@ -50,8 +53,15 @@ def configure_structured_logging() -> None:
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
 
-    logger = logging.getLogger("enterprise_ai_workspace")
+    logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+
     logger.handlers.clear()
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
-    logger.propagate = True
+
+    # The application logger owns its structured JSON handler.
+    # Prevent propagation to root/Uvicorn handlers so each event
+    # is emitted exactly once and always keeps the JSON format.
+    logger.propagate = False

@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from app.main import app
@@ -68,21 +69,35 @@ def test_each_request_gets_unique_request_id() -> None:
         != second_response.headers["X-Request-ID"]
     )
 
+
 def test_completed_request_emits_correlated_log(
     caplog,
 ) -> None:
     client = TestClient(app)
     trace_id = uuid.uuid4()
 
-    with caplog.at_level(
-        "INFO",
-        logger="enterprise_ai_workspace.http",
-    ):
-        response = client.get(
-            "/health",
-            headers={
-                "X-Trace-ID": str(trace_id),
-            },
+    application_logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+
+    application_logger.addHandler(
+        caplog.handler
+    )
+
+    try:
+        with caplog.at_level(
+            "INFO",
+            logger="enterprise_ai_workspace.http",
+        ):
+            response = client.get(
+                "/health",
+                headers={
+                    "X-Trace-ID": str(trace_id),
+                },
+            )
+    finally:
+        application_logger.removeHandler(
+            caplog.handler
         )
 
     assert response.status_code == 200
@@ -107,25 +122,39 @@ def test_completed_request_emits_correlated_log(
     assert isinstance(record.duration_ms, float)
     assert record.duration_ms >= 0
 
+
 def test_failed_request_emits_correlated_error_log(
     caplog,
 ) -> None:
     client = TestClient(app)
     trace_id = uuid.uuid4()
 
-    with caplog.at_level(
-        "ERROR",
-        logger="enterprise_ai_workspace.http",
-    ):
-        try:
-            client.get(
-                "/test-observability-error",
-                headers={
-                    "X-Trace-ID": str(trace_id),
-                },
-            )
-        except RuntimeError:
-            pass
+    application_logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+
+    application_logger.addHandler(
+        caplog.handler
+    )
+
+    try:
+        with caplog.at_level(
+            "ERROR",
+            logger="enterprise_ai_workspace.http",
+        ):
+            try:
+                client.get(
+                    "/test-observability-error",
+                    headers={
+                        "X-Trace-ID": str(trace_id),
+                    },
+                )
+            except RuntimeError:
+                pass
+    finally:
+        application_logger.removeHandler(
+            caplog.handler
+        )
 
     matching_records = [
         record

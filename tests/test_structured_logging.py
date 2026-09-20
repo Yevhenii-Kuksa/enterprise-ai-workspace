@@ -25,7 +25,9 @@ def test_json_formatter_outputs_structured_log() -> None:
 
     formatter = JsonFormatter()
 
-    payload = json.loads(formatter.format(record))
+    payload = json.loads(
+        formatter.format(record)
+    )
 
     assert payload["level"] == "INFO"
     assert payload["logger"] == "enterprise_ai_workspace"
@@ -50,7 +52,9 @@ def test_json_formatter_handles_missing_trace_metadata() -> None:
 
     formatter = JsonFormatter()
 
-    payload = json.loads(formatter.format(record))
+    payload = json.loads(
+        formatter.format(record)
+    )
 
     assert payload["level"] == "WARNING"
     assert payload["message"] == "Standalone event."
@@ -58,6 +62,7 @@ def test_json_formatter_handles_missing_trace_metadata() -> None:
     assert payload["request_id"] is None
     assert payload["action_id"] is None
     assert payload["event_type"] is None
+
 
 def test_json_formatter_includes_safe_telemetry_fields() -> None:
     record = logging.LogRecord(
@@ -84,7 +89,9 @@ def test_json_formatter_includes_safe_telemetry_fields() -> None:
 
     formatter = JsonFormatter()
 
-    payload = json.loads(formatter.format(record))
+    payload = json.loads(
+        formatter.format(record)
+    )
 
     assert payload["model_name"] == "fake-answer-model"
     assert payload["evidence_count"] == 3
@@ -93,16 +100,37 @@ def test_json_formatter_includes_safe_telemetry_fields() -> None:
     assert payload["reliability_decision"] == "allow"
     assert payload["duration_ms"] == 42.5
 
-def test_configure_structured_logging_configures_application_logger() -> None:
+
+def test_configure_structured_logging_owns_application_handler() -> None:
     configure_structured_logging()
 
-    logger = logging.getLogger("enterprise_ai_workspace")
+    logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
 
     assert logger.level == logging.INFO
-    assert logger.propagate is True
+    assert logger.propagate is False
     assert len(logger.handlers) == 1
 
     handler = logger.handlers[0]
 
-    assert isinstance(handler, logging.StreamHandler)
-    assert isinstance(handler.formatter, JsonFormatter)
+    assert isinstance(
+        handler,
+        logging.StreamHandler,
+    )
+    assert isinstance(
+        handler.formatter,
+        JsonFormatter,
+    )
+
+
+def test_configure_structured_logging_is_idempotent() -> None:
+    configure_structured_logging()
+    configure_structured_logging()
+
+    logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+
+    assert len(logger.handlers) == 1
+    assert logger.propagate is False

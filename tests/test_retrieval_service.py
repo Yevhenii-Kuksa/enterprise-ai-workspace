@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from app.core.trace_context import TraceContext
@@ -439,19 +440,27 @@ def test_retrieve_evidence_emits_correlated_trace(
 
     trace_context = TraceContext.create()
 
-    with SessionLocal() as db:
-        with caplog.at_level(
-            "INFO",
-            logger="enterprise_ai_workspace.retrieval",
-        ):
-            result = retrieve_evidence(
-                db,
-                current_user=current_user,
-                query="Where is the warehouse procedure?",
-                embedding_provider=provider,
-                limit=5,
-                trace_context=trace_context,
-            )
+    application_logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+    application_logger.addHandler(caplog.handler)
+
+    try:
+        with SessionLocal() as db:
+            with caplog.at_level(
+                "INFO",
+                logger="enterprise_ai_workspace.retrieval",
+            ):
+                result = retrieve_evidence(
+                    db,
+                    current_user=current_user,
+                    query="Where is the warehouse procedure?",
+                    embedding_provider=provider,
+                    limit=5,
+                    trace_context=trace_context,
+                )
+    finally:
+        application_logger.removeHandler(caplog.handler)
 
     assert result.evidence == []
 
@@ -511,22 +520,30 @@ def test_retrieve_evidence_emits_embedding_failure_trace(
 
     trace_context = TraceContext.create()
 
-    with SessionLocal() as db:
-        with caplog.at_level(
-            "ERROR",
-            logger="enterprise_ai_workspace.retrieval",
-        ):
-            try:
-                retrieve_evidence(
-                    db,
-                    current_user=current_user,
-                    query="Where is the warehouse procedure?",
-                    embedding_provider=provider,
-                    limit=5,
-                    trace_context=trace_context,
-                )
-            except ConnectionError:
-                pass
+    application_logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+    application_logger.addHandler(caplog.handler)
+
+    try:
+        with SessionLocal() as db:
+            with caplog.at_level(
+                "ERROR",
+                logger="enterprise_ai_workspace.retrieval",
+            ):
+                try:
+                    retrieve_evidence(
+                        db,
+                        current_user=current_user,
+                        query="Where is the warehouse procedure?",
+                        embedding_provider=provider,
+                        limit=5,
+                        trace_context=trace_context,
+                    )
+                except ConnectionError:
+                    pass
+    finally:
+        application_logger.removeHandler(caplog.handler)
 
     matching_records = [
         record
@@ -578,22 +595,30 @@ def test_retrieve_evidence_emits_database_failure_trace(
         fail_vector_search,
     )
 
-    with SessionLocal() as db:
-        with caplog.at_level(
-            "ERROR",
-            logger="enterprise_ai_workspace.retrieval",
-        ):
-            try:
-                retrieve_evidence(
-                    db,
-                    current_user=current_user,
-                    query="Where is the warehouse procedure?",
-                    embedding_provider=provider,
-                    limit=5,
-                    trace_context=trace_context,
-                )
-            except RuntimeError:
-                pass
+    application_logger = logging.getLogger(
+        "enterprise_ai_workspace"
+    )
+    application_logger.addHandler(caplog.handler)
+
+    try:
+        with SessionLocal() as db:
+            with caplog.at_level(
+                "ERROR",
+                logger="enterprise_ai_workspace.retrieval",
+            ):
+                try:
+                    retrieve_evidence(
+                        db,
+                        current_user=current_user,
+                        query="Where is the warehouse procedure?",
+                        embedding_provider=provider,
+                        limit=5,
+                        trace_context=trace_context,
+                    )
+                except RuntimeError:
+                    pass
+    finally:
+        application_logger.removeHandler(caplog.handler)
 
     matching_records = [
         record
@@ -617,4 +642,4 @@ def test_retrieve_evidence_emits_database_failure_trace(
     assert record.error_type == "RuntimeError"
     assert record.error_category == "database"
     assert isinstance(record.duration_ms, float)
-    assert record.duration_ms >= 0        
+    assert record.duration_ms >= 0
