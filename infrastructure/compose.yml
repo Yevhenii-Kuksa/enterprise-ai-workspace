@@ -16,10 +16,117 @@ services:
       - enterprise_ai_postgres_data:/var/lib/postgresql/data
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+
+    container_name: enterprise-ai-migrate
+    restart: "no"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-development}
+
+      DATABASE_URL: >-
+        postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+
+      AI_ANSWER_PROVIDER: ${AI_ANSWER_PROVIDER:-openai}
+      AI_ANSWER_MODEL: ${AI_ANSWER_MODEL:-gpt-5.6-luna}
+
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-30}
+      OPENAI_MAX_RETRIES: ${OPENAI_MAX_RETRIES:-2}
+
+      AI_RELIABILITY_MAX_EVIDENCE_DISTANCE: ${AI_RELIABILITY_MAX_EVIDENCE_DISTANCE:-0.35}
+      AI_RELIABILITY_MAX_SOURCE_AGE_DAYS: ${AI_RELIABILITY_MAX_SOURCE_AGE_DAYS:-30}
+
+    command:
+      [
+        "alembic",
+        "-c",
+        "/app/alembic.ini",
+        "upgrade",
+        "head",
+      ]
+
+    read_only: true
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    tmpfs:
+      - /tmp
+
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+
+    container_name: enterprise-ai-backend
+    restart: unless-stopped
+
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-development}
+
+      DATABASE_URL: >-
+        postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+
+      AI_ANSWER_PROVIDER: ${AI_ANSWER_PROVIDER:-openai}
+      AI_ANSWER_MODEL: ${AI_ANSWER_MODEL:-gpt-5.6-luna}
+
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-30}
+      OPENAI_MAX_RETRIES: ${OPENAI_MAX_RETRIES:-2}
+
+      AI_RELIABILITY_MAX_EVIDENCE_DISTANCE: ${AI_RELIABILITY_MAX_EVIDENCE_DISTANCE:-0.35}
+      AI_RELIABILITY_MAX_SOURCE_AGE_DAYS: ${AI_RELIABILITY_MAX_SOURCE_AGE_DAYS:-30}
+
+    ports:
+      - "8000:8000"
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    read_only: true
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    tmpfs:
+      - /tmp
 
 volumes:
   enterprise_ai_postgres_data:
