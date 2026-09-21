@@ -48,7 +48,11 @@ Key modules:
 
 ## Main Demo Scenario
 
-The primary scenario is based on customer order `ORD-1048`.
+The primary scenario is based on customer order:
+
+```text
+ORD-1048
+```
 
 ### Business context
 
@@ -60,14 +64,14 @@ Shipment:       23.09.2026
 Risk state:     AT_RISK
 ```
 
-Production requires material:
+Production requires:
 
 ```text
 MAT-204
 Structural Insulated Panel 120 mm
 ```
 
-Inventory:
+Inventory situation:
 
 | Metric | Value |
 |---|---:|
@@ -76,7 +80,13 @@ Inventory:
 | Shortage | 80 m² |
 | Safety stock | 300 m² |
 
-The related purchase order `PO-2026-0914` is delayed and split into two deliveries:
+The related purchase order:
+
+```text
+PO-2026-0914
+```
+
+is delayed and split into two deliveries:
 
 ```text
 200 m² → 21.09.2026
@@ -85,7 +95,7 @@ The related purchase order `PO-2026-0914` is delayed and split into two deliveri
 
 The second delivery arrives after the planned customer shipment date.
 
-The workspace connects this operational risk with supporting business evidence, creates a recommendation, routes the proposed action through human approval, records execution and preserves the complete audit trail.
+The workspace connects this operational risk with supporting evidence, creates a recommendation, routes the proposed action through human approval, records the execution and preserves the complete audit trail.
 
 ---
 
@@ -149,37 +159,9 @@ The audit trail preserves the sequence from AI insight through proposal, approva
 
 ![Audit Trail](docs/screenshots/12-audit-detail.png)
 
-### Dashboard
-
-![Dashboard](docs/screenshots/01-dashboard.png)
-
-### Executive Briefing
-
-![Briefing](docs/screenshots/02-briefing.png)
-
-### AI Assistant
-
-![Assistant](docs/screenshots/03-assistant.png)
-
-### ERP Intelligence
-
-![ERP](docs/screenshots/04-erp.png)
-
-### Human Approval
-
-![Approvals](docs/screenshots/05-approvals.png)
-
-### Controlled Execution
-
-![Executions](docs/screenshots/06-executions.png)
-
-### Audit Trail
-
-![Audit](docs/screenshots/07-audit.png)
-
 ---
 
-## Architecture
+# Architecture
 
 ```mermaid
 flowchart LR
@@ -318,13 +300,13 @@ APPROVAL_GRANTED
 ACTION_EXECUTED
 ```
 
-Technical event identifiers remain stable internally, while the UI presents localized human-readable labels.
+Technical event identifiers remain stable internally while the UI presents localized human-readable labels.
 
 The audit trail preserves the relationship between:
 
 - business signal
 - AI insight
-- proposal
+- action proposal
 - reviewer
 - execution
 - timestamp
@@ -332,9 +314,9 @@ The audit trail preserves the relationship between:
 
 ---
 
-## Technology
+# Technology
 
-### Backend
+## Backend
 
 - Python 3.12
 - FastAPI
@@ -343,7 +325,7 @@ The audit trail preserves the relationship between:
 - pgvector
 - OpenAI API
 
-### Frontend
+## Frontend
 
 - React 19
 - TypeScript
@@ -352,7 +334,7 @@ The audit trail preserves the relationship between:
 - Lucide React
 - custom enterprise UI system
 
-### Infrastructure
+## Infrastructure
 
 - Docker
 - Docker Compose
@@ -389,11 +371,11 @@ Frontend production build
 Successful
 ```
 
-Testing covers the backend architecture, retrieval and AI-related behavior, validation, governance and supporting application logic.
+Testing covers backend architecture, retrieval and AI-related behavior, validation, governance and supporting application logic.
 
 ---
 
-## Repository Structure
+# Repository Structure
 
 ```text
 enterprise-ai-workspace/
@@ -414,6 +396,9 @@ enterprise-ai-workspace/
 │       ├── styles/
 │       └── data/
 │
+├── docs/
+│   └── screenshots/
+│
 ├── tests/
 ├── migrations/
 ├── docker-compose.yml
@@ -422,9 +407,11 @@ enterprise-ai-workspace/
 
 ---
 
-## Run Locally
+# Run Locally
 
-### Backend
+## Backend
+
+Activate the Python environment and start the API:
 
 ```bash
 uvicorn backend.app.main:app --reload
@@ -451,7 +438,9 @@ Example response:
 }
 ```
 
-### Frontend
+---
+
+## Frontend
 
 ```bash
 cd frontend
@@ -467,7 +456,7 @@ http://localhost:5173
 
 ---
 
-## Quality Checks
+# Quality Checks
 
 Backend:
 
@@ -487,7 +476,7 @@ npm run build
 
 ---
 
-## Demo Scope
+# Demo Scope
 
 This repository is a functional engineering demo, not a production deployment connected to real company accounts.
 
@@ -508,7 +497,7 @@ External integrations such as Gmail, Google Drive, SharePoint, Calendar and ERP 
 
 ---
 
-## My Contribution
+# My Contribution
 
 Designed and implemented the project end to end, including:
 
@@ -535,7 +524,7 @@ Designed and implemented the project end to end, including:
 
 ---
 
-## Current Status
+# Current Status
 
 The core architecture and primary business workflow are implemented and validated.
 
@@ -550,14 +539,26 @@ ORD-1048
 → audit trail
 ```
 
-The next productization phase would add production authentication, user administration, live enterprise connector authorization and deployment-specific configuration.
+The next productization phase would add:
+
+- production authentication
+- user administration
+- live enterprise connector authorization
+- profile management
+- organization-specific configuration
+- production deployment
+- monitoring and backup policies
 
 ---
 
-## Author
+# Author
 
 **Yevhenii Kuksa**
 
 AI Automation / AI Solutions
 
-GitHub: `Yevhenii-Kuksa`
+GitHub:
+
+```text
+Yevhenii-Kuksa
+```
