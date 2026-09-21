@@ -31,9 +31,13 @@ const sourceCodes = [
   'SUP-01',
 ]
 
-const sources = demoKnowledgeDocuments.filter((document) =>
-  sourceCodes.includes(document.code),
-)
+const sources = sourceCodes.flatMap((code) => {
+  const source = demoKnowledgeDocuments.find(
+    (document) => document.code === code,
+  )
+
+  return source ? [source] : []
+})
 
 function AssistantPage() {
   return (

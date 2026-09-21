@@ -177,10 +177,10 @@ function AuditPage() {
   return (
     <div className="ui-page-stack audit-v2">
       <PageHeader
-        eyebrow="Audyt i identyfikowalnoЕ›Д‡"
+        eyebrow="Audyt i identyfikowalność"
         title="Audyt"
         description={
-          'Chronologiczny zapis kluczowych zdarzeЕ„, decyzji i wykonaЕ„ ' +
+          'Chronologiczny zapis kluczowych zdarzeń, decyzji i wykonań ' +
           'w Enterprise AI Workspace.'
         }
         actions={
@@ -188,7 +188,7 @@ function AuditPage() {
             <ShieldCheck size={18} />
 
             <div>
-              <span>ЕљcieЕјka audytowa</span>
+              <span>Ścieżka audytowa</span>
               <strong>Aktywny</strong>
             </div>
           </div>
@@ -204,23 +204,23 @@ function AuditPage() {
         />
 
         <KpiCard
-          label="Typy zdarzeЕ„"
+          label="Typy zdarzeń"
           value={eventTypes.length}
-          meta="Unikalne klasy eventГіw"
+          meta="Unikalne klasy eventów"
           icon={<FileSearch size={20} />}
         />
 
         <KpiCard
           label="Widoczne"
           value={filteredEvents.length}
-          meta="Wyniki po zastosowaniu filtrГіw"
+          meta="Wyniki po zastosowaniu filtrów"
           icon={<Search size={20} />}
         />
 
         <KpiCard
-          label="IdentyfikowalnoЕ›Д‡"
+          label="Identyfikowalność"
           value="100%"
-          meta="Kluczowe dziaЕ‚ania objД™te Е›cieЕјkД… audytowД…"
+          meta="Kluczowe działania objęte ścieżką audytową"
           icon={<ShieldCheck size={20} />}
         />
       </section>
@@ -228,8 +228,8 @@ function AuditPage() {
       <section className="ui-section-stack">
         <SectionHeader
           title="Dziennik audytowy"
-          description="Zdarzenia uporzД…dkowane w jednym rejestrze"
-          meta={`${filteredEvents.length} wpisГіw`}
+          description="Zdarzenia uporządkowane w jednym rejestrze"
+          meta={`${filteredEvents.length} wpisów`}
         />
 
         <div className="audit-v2__toolbar">
@@ -258,10 +258,10 @@ function AuditPage() {
               setEventFilter(event.target.value)
               setSelectedIndex(0)
             }}
-            aria-label="Filtruj wedЕ‚ug typu zdarzenia"
+            aria-label="Filtruj według typu zdarzenia"
           >
             <option value="ALL">
-              Wszystkie typy zdarzeЕ„
+              Wszystkie typy zdarzeń
             </option>
 
             {eventTypes.map((eventType) => (
@@ -288,11 +288,11 @@ function AuditPage() {
                   <FileSearch size={26} />
 
                   <strong>
-                    Brak zdarzeЕ„
+                    Brak zdarzeń
                   </strong>
 
                   <span>
-                    ZmieЕ„ wyszukiwanie lub wybrany filtr.
+                    Zmień wyszukiwanie lub wybrany filtr.
                   </span>
                 </div>
               }
@@ -304,7 +304,7 @@ function AuditPage() {
               <header className="audit-v2__detail-header">
                 <div>
                   <span className="audit-v2__overline">
-                    SzczegГіЕ‚y zdarzenia
+                    Szczegóły zdarzenia
                   </span>
 
                   <h2>
@@ -336,7 +336,7 @@ function AuditPage() {
                 </div>
 
                 <div>
-                  <span>Е№rГіdЕ‚o</span>
+                  <span>Źródło</span>
                   <strong>
                     Enterprise AI Workspace
                   </strong>
@@ -362,11 +362,11 @@ function AuditPage() {
 
                 <div>
                   <strong>
-                    IdentyfikowalnoЕ›Д‡ zachowana
+                    Identyfikowalność zachowana
                   </strong>
 
                   <span>
-                    Zdarzenie pozostaje czД™Е›ciД… Е›cieЕјki audytowej Workspace.
+                    Zdarzenie pozostaje częścią ścieżki audytowej Workspace.
                   </span>
                 </div>
               </footer>
