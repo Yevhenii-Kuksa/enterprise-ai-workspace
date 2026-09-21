@@ -1,257 +1,370 @@
 import {
-  Bot,
-  CheckCircle2,
-  Database,
-  FileText,
-  History,
+  Activity,
+  FileSearch,
   Search,
   ShieldCheck,
-  UserRound,
-  Workflow,
 } from 'lucide-react'
+import {
+  useMemo,
+  useState,
+} from 'react'
 
+import DataTable, {
+  type DataTableColumn,
+} from '../components/ui/DataTable'
+import KpiCard from '../components/ui/KpiCard'
+import PageHeader from '../components/ui/PageHeader'
+import SectionHeader from '../components/ui/SectionHeader'
+import StatusBadge from '../components/ui/StatusBadge'
 import { demoAuditEvents } from '../data/demoData'
 
 import './AuditPage.css'
 
-const eventPresentation = {
-  AI_INSIGHT_CREATED: {
-    icon: Bot,
-    tone: 'success',
-    actor: 'Enterprise AI Workspace',
-    source: 'AI Intelligence',
-    status: 'Zarejestrowano',
-  },
-  ACTION_PROPOSAL_CREATED: {
-    icon: FileText,
-    tone: 'success',
-    actor: 'Anna Kowalska',
-    source: 'Governance Engine',
-    status: 'Utworzono',
-  },
-  APPROVAL_GRANTED: {
-    icon: UserRound,
-    tone: 'success',
-    actor: 'Human Approval',
-    source: 'Approval Engine',
-    status: 'Zatwierdzono',
-  },
-  ACTION_EXECUTED: {
-    icon: Workflow,
-    tone: 'success',
-    actor: 'Governed Execution',
-    source: 'Execution Engine',
-    status: 'Wykonano',
-  },
-} as const
+type AuditEvent =
+  (typeof demoAuditEvents)[number]
 
-const auditEvents = demoAuditEvents.map((event, index) => {
-  const presentation =
-    eventPresentation[
-      event.event as keyof typeof eventPresentation
-    ]
-
-  const sequence = String(index + 1).padStart(3, '0')
-
-  let actionId = '—'
-
-  if (event.event === 'ACTION_PROPOSAL_CREATED') {
-    actionId = `ACT-PROP-${sequence}`
+function getEventTone(eventType: string) {
+  if (
+    eventType.includes('EXECUTED') ||
+    eventType.includes('GRANTED')
+  ) {
+    return 'success' as const
   }
 
-  if (event.event === 'APPROVAL_GRANTED') {
-    actionId = `APPROVAL-${sequence}`
+  if (
+    eventType.includes('FAILED') ||
+    eventType.includes('DENIED')
+  ) {
+    return 'danger' as const
   }
 
-  if (event.event === 'ACTION_EXECUTED') {
-    actionId = `EXECUTION-${sequence}`
+  if (
+    eventType.includes('PENDING') ||
+    eventType.includes('REQUESTED')
+  ) {
+    return 'warning' as const
   }
 
-  return {
-    ...event,
-    ...presentation,
-    traceId: `trc_ord1048_${sequence}`,
-    requestId: `req_ord1048_${sequence}`,
-    actionId,
-  }
-})
+  return 'info' as const
+}
+
+function formatEventLabel(eventType: string) {
+  return eventType
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
 
 function AuditPage() {
-  const aiEventCount = auditEvents.filter(
-    (event) => event.event === 'AI_INSIGHT_CREATED',
-  ).length
+  const [searchQuery, setSearchQuery] = useState('')
+  const [eventFilter, setEventFilter] = useState('ALL')
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
-  const approvalCount = auditEvents.filter(
-    (event) => event.event === 'APPROVAL_GRANTED',
-  ).length
+  const eventTypes = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          demoAuditEvents.map(
+            (event) => event.event,
+          ),
+        ),
+      ).sort(),
+    [],
+  )
 
-  const executionCount = auditEvents.filter(
-    (event) => event.event === 'ACTION_EXECUTED',
-  ).length
+  const filteredEvents = useMemo(() => {
+    const query = searchQuery
+      .trim()
+      .toLowerCase()
+
+    return demoAuditEvents.filter((event) => {
+      const matchesSearch =
+        query.length === 0 ||
+        event.event
+          .toLowerCase()
+          .includes(query) ||
+        event.description
+          .toLowerCase()
+          .includes(query) ||
+        event.time
+          .toLowerCase()
+          .includes(query)
+
+      const matchesType =
+        eventFilter === 'ALL' ||
+        event.event === eventFilter
+
+      return matchesSearch && matchesType
+    })
+  }, [eventFilter, searchQuery])
+
+  const selectedEvent =
+    filteredEvents[selectedIndex] ??
+    filteredEvents[0] ??
+    demoAuditEvents[0]
+
+  const columns: DataTableColumn<AuditEvent>[] = [
+    {
+      key: 'event',
+      header: 'Typ zdarzenia',
+      width: '230px',
+      render: (event) => (
+        <button
+          className="audit-v2__event-button"
+          type="button"
+          onClick={() =>
+            setSelectedIndex(
+              filteredEvents.indexOf(event),
+            )
+          }
+        >
+          <div className="audit-v2__event-icon">
+            <Activity size={17} />
+          </div>
+
+          <div>
+            <span className="ui-table__primary">
+              {formatEventLabel(event.event)}
+            </span>
+
+            <span className="ui-table__secondary">
+              {event.event}
+            </span>
+          </div>
+        </button>
+      ),
+    },
+    {
+      key: 'description',
+      header: 'Opis',
+      render: (event) => (
+        <span className="audit-v2__description">
+          {event.description}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '140px',
+      render: (event) => (
+        <StatusBadge
+          tone={getEventTone(event.event)}
+        >
+          Zapisano
+        </StatusBadge>
+      ),
+    },
+    {
+      key: 'time',
+      header: 'Czas',
+      width: '110px',
+      render: (event) => (
+        <span className="audit-v2__time">
+          {event.time}
+        </span>
+      ),
+    },
+  ]
 
   return (
-    <div className="audit-page">
-      <section className="audit-hero">
-        <div className="audit-hero-main">
-          <div className="audit-hero-icon">
-            <History size={23} />
-          </div>
-
-          <div>
-            <span className="section-kicker">
-              Audit & traceability
-            </span>
-
-            <h2>Audyt</h2>
-
-            <p>
-              Pełna historia zdarzeń systemowych,
-              decyzji człowieka i kontrolowanych
-              wykonań z zachowaniem identyfikatorów
-              śledzenia Enterprise AI Workspace.
-            </p>
-          </div>
-        </div>
-
-        <div className="audit-governance">
-          <div className="audit-governance-icon">
+    <div className="ui-page-stack audit-v2">
+      <PageHeader
+        eyebrow="Audit & traceability"
+        title="Audyt"
+        description={
+          'Chronologiczny zapis kluczowych zdarzeń, decyzji i wykonań ' +
+          'w Enterprise AI Workspace.'
+        }
+        actions={
+          <div className="audit-v2__integrity">
             <ShieldCheck size={18} />
-          </div>
 
-          <div>
-            <span>Governance</span>
-            <strong>Aktywne</strong>
+            <div>
+              <span>Audit trail</span>
+              <strong>Aktywny</strong>
+            </div>
           </div>
-        </div>
+        }
+      />
+
+      <section className="ui-kpi-grid">
+        <KpiCard
+          label="Zdarzenia"
+          value={demoAuditEvents.length}
+          meta="Zdarzenia w scenariuszu demo"
+          icon={<Activity size={20} />}
+        />
+
+        <KpiCard
+          label="Typy zdarzeń"
+          value={eventTypes.length}
+          meta="Unikalne klasy eventów"
+          icon={<FileSearch size={20} />}
+        />
+
+        <KpiCard
+          label="Widoczne"
+          value={filteredEvents.length}
+          meta="Wyniki po zastosowaniu filtrów"
+          icon={<Search size={20} />}
+        />
+
+        <KpiCard
+          label="Traceability"
+          value="100%"
+          meta="Kluczowe działania objęte ścieżką audytową"
+          icon={<ShieldCheck size={20} />}
+        />
       </section>
 
-      <section className="audit-stats">
-        <article className="audit-stat-card">
-          <span>Zdarzenia dzisiaj</span>
-          <strong>{auditEvents.length}</strong>
-        </article>
+      <section className="ui-section-stack">
+        <SectionHeader
+          title="Dziennik audytowy"
+          description="Zdarzenia uporządkowane w jednym rejestrze"
+          meta={`${filteredEvents.length} wpisów`}
+        />
 
-        <article className="audit-stat-card">
-          <span>AI insights</span>
-          <strong>{aiEventCount}</strong>
-        </article>
-
-        <article className="audit-stat-card">
-          <span>Zatwierdzenia</span>
-          <strong>{approvalCount}</strong>
-        </article>
-
-        <article className="audit-stat-card">
-          <span>Wykonania</span>
-          <strong>{executionCount}</strong>
-        </article>
-      </section>
-
-      <section className="panel-card audit-log-card">
-        <div className="audit-toolbar">
-          <div>
-            <span className="section-kicker">
-              Audit log
-            </span>
-
-            <h3>Historia zdarzeń</h3>
-          </div>
-
-          <div className="audit-search">
-            <Search size={17} />
+        <div className="audit-v2__toolbar">
+          <label className="audit-v2__search">
+            <Search
+              size={18}
+              strokeWidth={1.9}
+            />
 
             <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value)
+                setSelectedIndex(0)
+              }}
+              placeholder="Szukaj w zdarzeniach audytowych..."
               aria-label="Szukaj w audycie"
-              placeholder="Szukaj zdarzenia..."
-              type="text"
             />
-          </div>
+          </label>
+
+          <select
+            className="audit-v2__select"
+            value={eventFilter}
+            onChange={(event) => {
+              setEventFilter(event.target.value)
+              setSelectedIndex(0)
+            }}
+            aria-label="Filtruj według typu zdarzenia"
+          >
+            <option value="ALL">
+              Wszystkie typy zdarzeń
+            </option>
+
+            {eventTypes.map((eventType) => (
+              <option
+                key={eventType}
+                value={eventType}
+              >
+                {formatEventLabel(eventType)}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="audit-list">
-          {auditEvents.map((event) => {
-            const Icon = event.icon
+        <div className="audit-v2__workspace">
+          <div className="audit-v2__table">
+            <DataTable
+              columns={columns}
+              rows={filteredEvents}
+              getRowKey={(event) =>
+                `${event.time}-${event.event}-${event.description}`
+              }
+              emptyState={
+                <div className="audit-v2__empty">
+                  <FileSearch size={26} />
 
-            return (
-              <article
-                className="audit-event"
-                key={`${event.time}-${event.event}-${event.description}`}
-              >
-                <div
-                  className={`audit-event-icon ${event.tone}`}
+                  <strong>
+                    Brak zdarzeń
+                  </strong>
+
+                  <span>
+                    Zmień wyszukiwanie lub wybrany filtr.
+                  </span>
+                </div>
+              }
+            />
+          </div>
+
+          {selectedEvent ? (
+            <aside className="ui-card audit-v2__detail">
+              <header className="audit-v2__detail-header">
+                <div>
+                  <span className="audit-v2__overline">
+                    Szczegóły zdarzenia
+                  </span>
+
+                  <h2>
+                    {formatEventLabel(
+                      selectedEvent.event,
+                    )}
+                  </h2>
+
+                  <span className="audit-v2__code">
+                    {selectedEvent.event}
+                  </span>
+                </div>
+
+                <StatusBadge
+                  tone={getEventTone(
+                    selectedEvent.event,
+                  )}
                 >
-                  <Icon size={18} />
+                  Zapisano
+                </StatusBadge>
+              </header>
+
+              <div className="audit-v2__detail-meta">
+                <div>
+                  <span>Czas</span>
+                  <strong>
+                    {selectedEvent.time}
+                  </strong>
                 </div>
 
-                <div className="audit-event-main">
-                  <div className="audit-event-header">
-                    <div>
-                      <span className="audit-event-type">
-                        {event.event}
-                      </span>
-
-                      <h4>{event.description}</h4>
-                    </div>
-
-                    <span
-                      className={`audit-event-status ${event.tone}`}
-                    >
-                      <CheckCircle2 size={14} />
-                      {event.status}
-                    </span>
-                  </div>
-
-                  <div className="audit-event-context">
-                    <div className="audit-context-item">
-                      <UserRound size={15} />
-
-                      <div>
-                        <span>Aktor</span>
-                        <strong>{event.actor}</strong>
-                      </div>
-                    </div>
-
-                    <div className="audit-context-item">
-                      <Database size={15} />
-
-                      <div>
-                        <span>Źródło</span>
-                        <strong>{event.source}</strong>
-                      </div>
-                    </div>
-
-                    <div className="audit-context-item">
-                      <History size={15} />
-
-                      <div>
-                        <span>Czas</span>
-                        <strong>
-                          19 września 2026 · {event.time}
-                        </strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="audit-identifiers">
-                    <div>
-                      <span>trace_id</span>
-                      <strong>{event.traceId}</strong>
-                    </div>
-
-                    <div>
-                      <span>request_id</span>
-                      <strong>{event.requestId}</strong>
-                    </div>
-
-                    <div>
-                      <span>action_id</span>
-                      <strong>{event.actionId}</strong>
-                    </div>
-                  </div>
+                <div>
+                  <span>Źródło</span>
+                  <strong>
+                    Enterprise AI Workspace
+                  </strong>
                 </div>
-              </article>
-            )
-          })}
+              </div>
+
+              <section className="audit-v2__detail-section">
+                <div className="audit-v2__detail-icon">
+                  <Activity size={19} />
+                </div>
+
+                <div>
+                  <span>Opis zdarzenia</span>
+
+                  <p>
+                    {selectedEvent.description}
+                  </p>
+                </div>
+              </section>
+
+              <footer className="audit-v2__trace">
+                <ShieldCheck size={20} />
+
+                <div>
+                  <strong>
+                    Traceability zachowana
+                  </strong>
+
+                  <span>
+                    Zdarzenie pozostaje częścią audit trail Workspace.
+                  </span>
+                </div>
+              </footer>
+            </aside>
+          ) : null}
         </div>
       </section>
     </div>

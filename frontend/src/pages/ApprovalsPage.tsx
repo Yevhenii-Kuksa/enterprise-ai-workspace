@@ -1,253 +1,346 @@
 import {
-  AlertTriangle,
   CheckCircle2,
   Clock3,
-  Database,
-  FileText,
+  FileCheck2,
   ShieldCheck,
+  TriangleAlert,
   UserRoundCheck,
-  Workflow,
-  XCircle,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
-import {
-  demoApprovals,
-  mainRisk,
-} from '../data/demoData'
+import KpiCard from '../components/ui/KpiCard'
+import PageHeader from '../components/ui/PageHeader'
+import SectionHeader from '../components/ui/SectionHeader'
+import StatusBadge from '../components/ui/StatusBadge'
+import { demoApprovals } from '../data/demoData'
 
 import './ApprovalsPage.css'
 
-const approvalPresentation = {
+
+type ApprovalMeta = {
+  owner: string
+  area: string
+  risk: 'Wysokie' | 'Średnie'
+  createdAt: string
+  rationale: string
+  impact: string
+  reviewer?: string
+}
+
+const approvalMeta: Record<string, ApprovalMeta> = {
   'ACT-PROP-001': {
-    icon: Database,
-    priority: 'Wysoki',
-    priorityTone: 'high',
-    actionType: 'ERP · Zakupy',
-    requestedBy: 'Enterprise AI Workspace',
-    createdAt: '19 września 2026 · 10:35',
-    risk: (
-      `Brak ${mainRisk.shortage} m² ${mainRisk.materialCode} ` +
-      `może wpłynąć na termin wysyłki ${mainRisk.orderNumber}.`
-    ),
+    owner: 'Enterprise AI Workspace',
+    area: 'Zakupy',
+    risk: 'Wysokie',
+    createdAt: '19.09.2026 · 10:45',
+    rationale:
+      'Niedobór MAT-204 może wpłynąć na termin realizacji ORD-1048.',
+    impact:
+      'Przyspieszenie zakupu materiału ogranicza ryzyko zatrzymania produkcji.',
+    reviewer: 'Piotr Nowak',
   },
   'ACT-PROP-002': {
-    icon: Workflow,
-    priority: 'Wysoki',
-    priorityTone: 'high',
-    actionType: 'Produkcja · Harmonogram',
-    requestedBy: 'Enterprise AI Workspace',
-    createdAt: '19 września 2026 · 10:40',
-    risk: (
-      `Zmiana harmonogramu wpływa na realizację ` +
-      `${mainRisk.orderNumber} i termin ${mainRisk.shipmentDate}.`
-    ),
+    owner: 'Enterprise AI Workspace',
+    area: 'Produkcja',
+    risk: 'Średnie',
+    createdAt: '19.09.2026 · 10:48',
+    rationale:
+      'Aktualny harmonogram produkcji wymaga dostosowania do opóźnionej dostawy MAT-204.',
+    impact:
+      'Korekta harmonogramu utrzymuje kontrolę nad terminem wysyłki ORD-1048.',
+    reviewer: 'Anna Kowalska',
   },
   'ACT-PROP-003': {
-    icon: AlertTriangle,
-    priority: 'Normalny',
-    priorityTone: 'normal',
-    actionType: 'Klient · Komunikacja',
-    requestedBy: 'Enterprise AI Workspace',
-    createdAt: '19 września 2026 · 10:45',
-    risk: (
-      'Komunikat do klienta wymaga zatwierdzenia człowieka ' +
-      'przed wysłaniem.'
-    ),
+    owner: 'Enterprise AI Workspace',
+    area: 'Obsługa klienta',
+    risk: 'Średnie',
+    createdAt: '19.09.2026 · 10:50',
+    rationale:
+      'Ryzyko terminu powinno zostać zakomunikowane klientowi w kontrolowany sposób.',
+    impact:
+      'Komunikacja pozwala przygotować klienta na możliwe przesunięcie bez automatycznej wysyłki.',
   },
-} as const
+}
 
-const approvals = demoApprovals.map((approval) => ({
-  ...approval,
-  ...approvalPresentation[
-    approval.code as keyof typeof approvalPresentation
-  ],
-}))
+const fallbackMeta: ApprovalMeta = {
+  owner: 'Enterprise AI Workspace',
+  area: 'Operacje',
+  risk: 'Średnie',
+  createdAt: '19.09.2026',
+  rationale: 'Działanie wymaga kontroli człowieka przed wykonaniem.',
+  impact: 'Decyzja wpływa na dalszy przebieg procesu operacyjnego.',
+}
+
+function getStatusTone(status: string) {
+  if (status === 'APPROVED') {
+    return 'success' as const
+  }
+
+  if (status === 'PENDING') {
+    return 'warning' as const
+  }
+
+  return 'neutral' as const
+}
+
+function getStatusLabel(status: string) {
+  if (status === 'APPROVED') {
+    return 'Zatwierdzone'
+  }
+
+  if (status === 'PENDING') {
+    return 'Oczekuje'
+  }
+
+  return status
+}
 
 function ApprovalsPage() {
-  const pendingCount = approvals.filter(
+  const [selectedCode, setSelectedCode] = useState(
+    demoApprovals.find((approval) => approval.status === 'PENDING')?.code ??
+      demoApprovals[0]?.code ??
+      '',
+  )
+
+  const pendingCount = demoApprovals.filter(
     (approval) => approval.status === 'PENDING',
   ).length
 
-  const approvedCount = approvals.filter(
+  const approvedCount = demoApprovals.filter(
     (approval) => approval.status === 'APPROVED',
   ).length
 
-  const highPriorityCount = approvals.filter(
-    (approval) => approval.priorityTone === 'high',
-  ).length
+  const selectedApproval = useMemo(
+    () =>
+      demoApprovals.find(
+        (approval) => approval.code === selectedCode,
+      ) ?? demoApprovals[0],
+    [selectedCode],
+  )
+
+  const selectedMeta = selectedApproval
+    ? approvalMeta[selectedApproval.code] ?? fallbackMeta
+    : fallbackMeta
 
   return (
-    <div className="approvals-page">
-      <section className="approvals-hero">
-        <div className="approvals-hero-main">
-          <div className="approvals-hero-icon">
-            <UserRoundCheck size={23} />
-          </div>
-
-          <div>
-            <span className="section-kicker">
-              Human-in-the-loop governance
-            </span>
-
-            <h2>Zatwierdzenia</h2>
-
-            <p>
-              Działania przygotowane przez system, które wymagają
-              decyzji człowieka przed wykonaniem lub zostały już
-              zatwierdzone w ramach procesu governance.
-            </p>
-          </div>
-        </div>
-
-        <div className="approvals-summary">
-          <div className="approvals-summary-icon">
+    <div className="ui-page-stack approvals-v2">
+      <PageHeader
+        eyebrow="Human-in-the-loop governance"
+        title="Zatwierdzenia"
+        description={
+          'Krytyczne działania proponowane przez AI wymagają kontroli ' +
+          'i decyzji człowieka przed wykonaniem.'
+        }
+        actions={
+          <div className="approvals-v2__governance">
             <ShieldCheck size={18} />
-          </div>
 
-          <div>
-            <span>Oczekuje na decyzję</span>
-            <strong>
-              {pendingCount}{' '}
-              {pendingCount === 1 ? 'działanie' : 'działania'}
-            </strong>
+            <div>
+              <span>Action governance</span>
+              <strong>Aktywne</strong>
+            </div>
           </div>
-        </div>
+        }
+      />
+
+      <section className="ui-kpi-grid">
+        <KpiCard
+          label="Wszystkie decyzje"
+          value={demoApprovals.length}
+          meta="Aktualna kolejka governance"
+          icon={<FileCheck2 size={20} />}
+        />
+
+        <KpiCard
+          label="Oczekujące"
+          value={pendingCount}
+          meta="Wymagają decyzji człowieka"
+          icon={<Clock3 size={20} />}
+        />
+
+        <KpiCard
+          label="Zatwierdzone"
+          value={approvedCount}
+          meta="Gotowe do governed execution"
+          icon={<CheckCircle2 size={20} />}
+        />
+
+        <KpiCard
+          label="Auto-execution"
+          value="0"
+          meta="Krytyczne akcje nie wykonują się automatycznie"
+          icon={<ShieldCheck size={20} />}
+        />
       </section>
 
-      <section className="approvals-stats">
-        <article className="approvals-stat-card">
-          <span>Wszystkie propozycje</span>
-          <strong>{approvals.length}</strong>
-        </article>
+      <section className="approvals-v2__workspace">
+        <div className="approvals-v2__queue">
+          <SectionHeader
+            title="Kolejka decyzji"
+            description="Wybierz pozycję, aby zobaczyć pełny kontekst"
+            meta={`${demoApprovals.length} pozycje`}
+          />
 
-        <article className="approvals-stat-card">
-          <span>Zatwierdzone</span>
-          <strong>{approvedCount}</strong>
-        </article>
+          <div className="ui-card approvals-v2__queue-list">
+            {demoApprovals.map((approval) => {
+              const meta =
+                approvalMeta[approval.code] ?? fallbackMeta
 
-        <article className="approvals-stat-card">
-          <span>Wysoki priorytet</span>
-          <strong>{highPriorityCount}</strong>
-        </article>
+              const isSelected =
+                approval.code === selectedApproval?.code
 
-        <article className="approvals-stat-card">
-          <span>Oczekujące</span>
-          <strong>{pendingCount}</strong>
-        </article>
-      </section>
-
-      <section className="approvals-list">
-        {approvals.map((approval) => {
-          const Icon = approval.icon
-          const isPending = approval.status === 'PENDING'
-
-          return (
-            <article
-              className="panel-card approval-card"
-              key={approval.code}
-            >
-              <div className="approval-card-main">
-                <div
-                  className={`approval-card-icon ${approval.priorityTone}`}
-                >
-                  <Icon size={20} />
-                </div>
-
-                <div className="approval-card-content">
-                  <div className="approval-card-topline">
-                    <span
-                      className={`approval-priority ${approval.priorityTone}`}
-                    >
-                      {approval.priority}
-                    </span>
-
-                    <span className="approval-created">
-                      <Clock3 size={14} />
-                      {approval.createdAt}
-                    </span>
-                  </div>
-
-                  <h3>{approval.title}</h3>
-
-                  <p className="approval-description">
-                    {approval.code} · {approval.actionType}
-                  </p>
-
-                  <div className="approval-meta-grid">
-                    <div className="approval-meta-item">
-                      <span>Status</span>
-                      <strong>
-                        {isPending ? 'Oczekuje' : 'Zatwierdzone'}
-                      </strong>
-                    </div>
-
-                    <div className="approval-meta-item">
-                      <span>Zatwierdzający</span>
-                      <strong>
-                        {approval.approver ?? 'Nie przypisano'}
-                      </strong>
-                    </div>
-
-                    <div className="approval-meta-item">
-                      <span>Inicjator</span>
-                      <strong>{approval.requestedBy}</strong>
-                    </div>
-                  </div>
-
-                  <div className="approval-risk">
-                    <AlertTriangle size={16} />
-
-                    <div>
-                      <span>Kontrola ryzyka</span>
-                      <strong>{approval.risk}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="approval-card-actions">
+              return (
                 <button
-                  className="approval-secondary-button"
+                  className={[
+                    'approvals-v2__queue-row',
+                    isSelected
+                      ? 'approvals-v2__queue-row--selected'
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  key={approval.code}
+                  onClick={() => setSelectedCode(approval.code)}
                   type="button"
                 >
-                  <FileText size={16} />
-                  Szczegóły
+                  <div className="approvals-v2__queue-icon">
+                    {approval.status === 'PENDING' ? (
+                      <Clock3 size={19} />
+                    ) : (
+                      <CheckCircle2 size={19} />
+                    )}
+                  </div>
+
+                  <div className="approvals-v2__queue-copy">
+                    <div className="approvals-v2__queue-title">
+                      <strong>{approval.title}</strong>
+
+                      <StatusBadge
+                        tone={getStatusTone(approval.status)}
+                      >
+                        {getStatusLabel(approval.status)}
+                      </StatusBadge>
+                    </div>
+
+                    <span>
+                      {approval.code} · {meta.area}
+                    </span>
+
+                    <small>{meta.createdAt}</small>
+                  </div>
                 </button>
+              )
+            })}
+          </div>
+        </div>
 
-                {isPending ? (
-                  <div className="approval-decision-actions">
-                    <button
-                      className="approval-reject-button"
-                      type="button"
-                    >
-                      <XCircle size={17} />
-                      Odrzuć
-                    </button>
+        {selectedApproval ? (
+          <aside className="ui-card approvals-v2__detail">
+            <header className="approvals-v2__detail-header">
+              <div>
+                <span className="approvals-v2__overline">
+                  Szczegóły decyzji
+                </span>
 
-                    <button
-                      className="approval-approve-button"
-                      type="button"
-                    >
-                      <CheckCircle2 size={17} />
-                      Zatwierdź
-                    </button>
-                  </div>
-                ) : (
-                  <div className="approval-decision-actions">
-                    <button
-                      className="approval-approve-button"
-                      disabled
-                      type="button"
-                    >
-                      <CheckCircle2 size={17} />
-                      Zatwierdzone
-                    </button>
-                  </div>
-                )}
+                <h2>{selectedApproval.title}</h2>
+
+                <span className="approvals-v2__code">
+                  {selectedApproval.code}
+                </span>
               </div>
-            </article>
-          )
-        })}
+
+              <StatusBadge
+                tone={getStatusTone(selectedApproval.status)}
+              >
+                {getStatusLabel(selectedApproval.status)}
+              </StatusBadge>
+            </header>
+
+            <div className="approvals-v2__detail-grid">
+              <div>
+                <span>Obszar</span>
+                <strong>{selectedMeta.area}</strong>
+              </div>
+
+              <div>
+                <span>Poziom ryzyka</span>
+                <strong>{selectedMeta.risk}</strong>
+              </div>
+
+              <div>
+                <span>Proponujący</span>
+                <strong>{selectedMeta.owner}</strong>
+              </div>
+
+              <div>
+                <span>Utworzono</span>
+                <strong>{selectedMeta.createdAt}</strong>
+              </div>
+            </div>
+
+            <section className="approvals-v2__detail-section">
+              <div className="approvals-v2__section-icon approvals-v2__section-icon--warning">
+                <TriangleAlert size={19} />
+              </div>
+
+              <div>
+                <span>Uzasadnienie</span>
+
+                <p>{selectedMeta.rationale}</p>
+              </div>
+            </section>
+
+            <section className="approvals-v2__detail-section">
+              <div className="approvals-v2__section-icon">
+                <ShieldCheck size={19} />
+              </div>
+
+              <div>
+                <span>Wpływ biznesowy</span>
+
+                <p>{selectedMeta.impact}</p>
+              </div>
+            </section>
+
+            <div className="approvals-v2__decision">
+              <span className="approvals-v2__overline">
+                Human decision
+              </span>
+
+              {selectedApproval.status === 'APPROVED' ? (
+                <div className="approvals-v2__approved">
+                  <UserRoundCheck size={22} />
+
+                  <div>
+                    <strong>
+                      Działanie zatwierdzone
+                    </strong>
+
+                    <span>
+                      {selectedMeta.reviewer ??
+                        'Autoryzowany użytkownik'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="approvals-v2__pending">
+                  <Clock3 size={22} />
+
+                  <div>
+                    <strong>
+                      Oczekuje na decyzję
+                    </strong>
+
+                    <span>
+                      Wykonanie pozostaje zablokowane do momentu
+                      zatwierdzenia przez uprawnioną osobę.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
+        ) : null}
       </section>
     </div>
   )

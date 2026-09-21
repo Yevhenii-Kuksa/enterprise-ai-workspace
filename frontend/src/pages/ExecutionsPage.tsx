@@ -1,217 +1,292 @@
 import {
   CheckCircle2,
-  Clock3,
   Database,
+  FileCheck2,
+  PlayCircle,
   ShieldCheck,
-  Workflow,
+  UserRound,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
-import { demoExecutions } from '../data/demoData'
+import DataTable, {
+  type DataTableColumn,
+} from '../components/ui/DataTable'
+import KpiCard from '../components/ui/KpiCard'
+import PageHeader from '../components/ui/PageHeader'
+import SectionHeader from '../components/ui/SectionHeader'
+import StatusBadge from '../components/ui/StatusBadge'
 
 import './ExecutionsPage.css'
 
-const executions = demoExecutions.map((execution) => {
-  if (execution.code === 'EXECUTION-001') {
-    return {
-      ...execution,
-      icon: Database,
-      statusLabel: 'Zakończono',
-      statusTone: 'success',
-      title: 'Pilne zamówienie materiału MAT-204',
-      description:
-        'Po zatwierdzeniu działanie zostało przekazane do kontrolowanej obsługi zakupowej.',
-      approvedBy: 'Piotr Nowak',
-      executedAt: '19 września 2026 · 10:52',
-      system: 'ERP · Zakupy',
-      actionId: 'act_mat204_urgent_order',
-      traceId: 'trc_ord1048_mat204_001',
-      idempotency: 'Pierwsze wykonanie',
-    }
-  }
+type ExecutionStatus = 'SUCCEEDED'
 
-  return {
-    ...execution,
-    icon: Workflow,
-    statusLabel: 'Zakończono',
-    statusTone: 'success',
-    title: 'Aktualizacja harmonogramu ORD-1048',
-    description:
-      'Po zatwierdzeniu harmonogram zamówienia został oznaczony do aktualizacji po przyjęciu MAT-204.',
-    approvedBy: 'Anna Kowalska',
-    executedAt: '19 września 2026 · 10:57',
-    system: 'Produkcja · Harmonogram',
-    actionId: 'act_ord1048_schedule_update',
-    traceId: 'trc_ord1048_schedule_002',
-    idempotency: 'Pierwsze wykonanie',
-  }
-})
+type ExecutionRecord = {
+  id: string
+  proposalCode: string
+  action: string
+  system: string
+  actor: string
+  status: ExecutionStatus
+  executedAt: string
+  result: string
+  governance: string
+}
+
+const executions: ExecutionRecord[] = [
+  {
+    id: 'Wykonanie 01',
+    proposalCode: 'ACT-PROP-001',
+    action: 'Utworzyć pilne zamówienie materiału MAT-204',
+    system: 'ERP',
+    actor: 'Piotr Nowak',
+    status: 'SUCCEEDED',
+    executedAt: '19.09.2026',
+    result:
+      'Zatwierdzone działanie zakupowe zostało wykonane zgodnie z decyzją użytkownika.',
+    governance:
+      'Wykonanie było możliwe dopiero po zatwierdzeniu ACT-PROP-001.',
+  },
+  {
+    id: 'Wykonanie 02',
+    proposalCode: 'ACT-PROP-002',
+    action: 'Zaktualizować harmonogram produkcji ORD-1048',
+    system: 'ERP',
+    actor: 'Anna Kowalska',
+    status: 'SUCCEEDED',
+    executedAt: '19.09.2026',
+    result:
+      'Harmonogram produkcji ORD-1048 został zaktualizowany po zatwierdzeniu działania.',
+    governance:
+      'Wykonanie było możliwe dopiero po zatwierdzeniu ACT-PROP-002.',
+  },
+]
 
 function ExecutionsPage() {
-  const succeededCount = executions.filter(
-    (execution) => execution.status === 'SUCCEEDED',
-  ).length
+  const [selectedId, setSelectedId] = useState(
+    executions[0]?.id ?? '',
+  )
+
+  const selectedExecution = useMemo(
+    () =>
+      executions.find(
+        (execution) => execution.id === selectedId,
+      ) ?? executions[0],
+    [selectedId],
+  )
+
+  const columns: DataTableColumn<ExecutionRecord>[] = [
+    {
+      key: 'action',
+      header: 'Działanie',
+      render: (execution) => (
+        <button
+          className="executions-v2__row-button"
+          type="button"
+          onClick={() => setSelectedId(execution.id)}
+        >
+          <div className="executions-v2__action-icon">
+            <PlayCircle size={18} />
+          </div>
+
+          <div>
+            <span className="ui-table__primary">
+              {execution.action}
+            </span>
+
+            <span className="ui-table__secondary">
+              {execution.proposalCode}
+            </span>
+          </div>
+        </button>
+      ),
+    },
+    {
+      key: 'system',
+      header: 'System',
+      width: '150px',
+      render: (execution) => (
+        <div className="executions-v2__system">
+          <Database size={16} />
+          <span>{execution.system}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'actor',
+      header: 'Zatwierdził',
+      width: '210px',
+      render: (execution) => (
+        <div className="executions-v2__actor">
+          <UserRound size={16} />
+          <span>{execution.actor}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '150px',
+      render: () => (
+        <StatusBadge tone="success">
+          SUCCEEDED
+        </StatusBadge>
+      ),
+    },
+    {
+      key: 'date',
+      header: 'Data',
+      width: '150px',
+      render: (execution) => execution.executedAt,
+    },
+  ]
 
   return (
-    <div className="executions-page">
-      <section className="executions-hero">
-        <div className="executions-hero-main">
-          <div className="executions-hero-icon">
-            <Workflow size={23} />
-          </div>
-
-          <div>
-            <span className="section-kicker">
-              Governed execution
-            </span>
-
-            <h2>Wykonania</h2>
-
-            <p>
-              Historia działań wykonanych po zatwierdzeniu,
-              z pełną informacją o statusie, identyfikatorach
-              i ścieżce audytowej.
-            </p>
-          </div>
-        </div>
-
-        <div className="executions-summary">
-          <div className="executions-summary-icon">
+    <div className="ui-page-stack executions-v2">
+      <PageHeader
+        eyebrow="Governed execution"
+        title="Wykonania"
+        description={
+          'Historia działań wykonanych po zatwierdzeniu przez uprawnionych ' +
+          'użytkowników. Krytyczne operacje nie są wykonywane automatycznie.'
+        }
+        actions={
+          <div className="executions-v2__governance">
             <ShieldCheck size={18} />
-          </div>
 
-          <div>
-            <span>Kontrola wykonania</span>
-            <strong>Governance aktywne</strong>
+            <div>
+              <span>Execution policy</span>
+              <strong>Human approval required</strong>
+            </div>
           </div>
-        </div>
+        }
+      />
+
+      <section className="ui-kpi-grid">
+        <KpiCard
+          label="Wykonania"
+          value={executions.length}
+          meta="Zarejestrowane wykonania governed actions"
+          icon={<PlayCircle size={20} />}
+        />
+
+        <KpiCard
+          label="Zakończone sukcesem"
+          value={executions.length}
+          meta="Wszystkie wykonane działania zakończone poprawnie"
+          icon={<CheckCircle2 size={20} />}
+        />
+
+        <KpiCard
+          label="Nieudane"
+          value="0"
+          meta="Brak błędów wykonania w scenariuszu demo"
+          icon={<FileCheck2 size={20} />}
+        />
+
+        <KpiCard
+          label="Auto-execution"
+          value="0"
+          meta="Brak krytycznych działań wykonanych bez approval"
+          icon={<ShieldCheck size={20} />}
+        />
       </section>
 
-      <section className="executions-stats">
-        <article className="executions-stat-card">
-          <span>Wykonane dzisiaj</span>
-          <strong>{executions.length}</strong>
-        </article>
+      <section className="executions-v2__workspace">
+        <div className="executions-v2__history">
+          <SectionHeader
+            title="Historia wykonań"
+            description="Zatwierdzone działania i ich wynik"
+            meta={`${executions.length} wykonania`}
+          />
 
-        <article className="executions-stat-card">
-          <span>Zakończone</span>
-          <strong>{succeededCount}</strong>
-        </article>
-
-        <article className="executions-stat-card">
-          <span>Replay zablokowany</span>
-          <strong>0</strong>
-        </article>
-
-        <article className="executions-stat-card">
-          <span>Błędy</span>
-          <strong>0</strong>
-        </article>
-      </section>
-
-      <section className="panel-card executions-table-card">
-        <div className="executions-table-header">
-          <div>
-            <span className="section-kicker">
-              Historia
-            </span>
-
-            <h3>Kontrolowane wykonania</h3>
-          </div>
-
-          <span className="executions-count">
-            Ostatnie {executions.length} zdarzenia
-          </span>
+          <DataTable
+            columns={columns}
+            rows={executions}
+            getRowKey={(execution) => execution.id}
+          />
         </div>
 
-        <div className="executions-table">
-          <div className="executions-table-head">
-            <span>Działanie</span>
-            <span>System</span>
-            <span>Zatwierdził</span>
-            <span>Status</span>
-            <span>Czas</span>
-          </div>
-
-          {executions.map((execution) => {
-            const Icon = execution.icon
-
-            return (
-              <div
-                className="executions-table-row"
-                key={execution.code}
-              >
-                <div className="execution-main">
-                  <div
-                    className={`execution-icon ${execution.statusTone}`}
-                  >
-                    <Icon size={18} />
-                  </div>
-
-                  <div>
-                    <strong>{execution.title}</strong>
-
-                    <span>
-                      {execution.description}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="execution-system">
-                  <Database size={15} />
-
-                  <span>{execution.system}</span>
-                </div>
-
-                <span className="execution-approved-by">
-                  {execution.approvedBy}
+        {selectedExecution ? (
+          <aside className="ui-card executions-v2__detail">
+            <header className="executions-v2__detail-header">
+              <div>
+                <span className="executions-v2__overline">
+                  Szczegóły wykonania
                 </span>
 
-                <span
-                  className={`execution-status ${execution.statusTone}`}
-                >
-                  <CheckCircle2 size={14} />
-                  {execution.statusLabel}
+                <h2>{selectedExecution.action}</h2>
+
+                <span className="executions-v2__code">
+                  {selectedExecution.proposalCode}
                 </span>
-
-                <div className="execution-time">
-                  <Clock3 size={14} />
-
-                  <span>{execution.executedAt}</span>
-                </div>
-
-                <div className="execution-trace">
-                  <div>
-                    <span>proposal</span>
-                    <strong>
-                      {execution.proposalCode}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>action_id</span>
-                    <strong>
-                      {execution.actionId}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>trace_id</span>
-                    <strong>
-                      {execution.traceId}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Idempotency</span>
-                    <strong>
-                      {execution.idempotency}
-                    </strong>
-                  </div>
-                </div>
               </div>
-            )
-          })}
-        </div>
+
+              <StatusBadge tone="success">
+                SUCCEEDED
+              </StatusBadge>
+            </header>
+
+            <div className="executions-v2__detail-grid">
+              <div>
+                <span>System</span>
+                <strong>{selectedExecution.system}</strong>
+              </div>
+
+              <div>
+                <span>Zatwierdził</span>
+                <strong>{selectedExecution.actor}</strong>
+              </div>
+
+              <div>
+                <span>Data wykonania</span>
+                <strong>
+                  {selectedExecution.executedAt}
+                </strong>
+              </div>
+
+              <div>
+                <span>Tryb</span>
+                <strong>Governed execution</strong>
+              </div>
+            </div>
+
+            <section className="executions-v2__detail-section">
+              <div className="executions-v2__section-icon">
+                <CheckCircle2 size={19} />
+              </div>
+
+              <div>
+                <span>Wynik wykonania</span>
+                <p>{selectedExecution.result}</p>
+              </div>
+            </section>
+
+            <section className="executions-v2__detail-section">
+              <div className="executions-v2__section-icon executions-v2__section-icon--governance">
+                <ShieldCheck size={19} />
+              </div>
+
+              <div>
+                <span>Kontrola governance</span>
+                <p>{selectedExecution.governance}</p>
+              </div>
+            </section>
+
+            <footer className="executions-v2__trace">
+              <ShieldCheck size={20} />
+
+              <div>
+                <strong>
+                  Pełna ścieżka audytowa dostępna
+                </strong>
+
+                <span>
+                  Approval → Execution → Audit trail
+                </span>
+              </div>
+            </footer>
+          </aside>
+        ) : null}
       </section>
     </div>
   )

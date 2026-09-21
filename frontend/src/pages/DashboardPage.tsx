@@ -1,12 +1,20 @@
 import {
   Activity,
-  Database,
-  PlugZap,
+  ArrowRight,
+  CircleCheckBig,
+  Plug,
   Sparkles,
+  TrendingUp,
+  TriangleAlert,
+  Trophy,
   Workflow,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
+import KpiCard from '../components/ui/KpiCard'
+import PageHeader from '../components/ui/PageHeader'
+import SectionHeader from '../components/ui/SectionHeader'
+import StatusBadge from '../components/ui/StatusBadge'
 import {
   currentUser,
   demoApprovals,
@@ -21,241 +29,270 @@ import './DashboardPage.css'
 const formatPln = (value: number) =>
   new Intl.NumberFormat('pl-PL').format(value)
 
-const metrics = [
-  {
-    label: 'Aktywny pipeline',
-    value: `${formatPln(demoSales.openPipelinePln)} PLN`,
-    detail: '3 aktywne szanse sprzedażowe',
-  },
-  {
-    label: 'Wygrane szanse',
-    value: `${formatPln(demoSales.wonValuePln)} PLN`,
-    detail: 'OPP-2026-041 → ORD-1048',
-  },
-  {
-    label: 'Ryzyka operacyjne',
-    value: '2',
-    detail: '1 wysokie · 1 opóźnione',
-  },
-  {
-    label: 'Decyzje',
-    value: '3',
-    detail: '2 zatwierdzone · 1 oczekująca',
-  },
-]
-
 function DashboardPage() {
   const pendingApprovals = demoApprovals.filter(
     (approval) => approval.status === 'PENDING',
-  ).length
+  )
+
+  const approvedApprovals = demoApprovals.filter(
+    (approval) => approval.status === 'APPROVED',
+  )
 
   const readyIntegrations = demoIntegrations.filter(
     (integration) => integration.status === 'READY',
-  ).length
+  )
+
+  const recentEvents = demoAuditEvents
+    .slice(-4)
+    .reverse()
 
   return (
-    <div className="dashboard-page">
-      <section className="hero-card">
-        <div className="hero-content">
-          <div className="hero-icon">
-            <Sparkles size={23} />
-          </div>
-
-          <div>
-            <span className="section-kicker">
-              Executive briefing
-            </span>
-
-            <h2>
-              Dzień dobry, {currentUser.fullName.split(' ')[0]}
-            </h2>
-
-            <p>
-              Najważniejszym ryzykiem operacyjnym jest dziś
-              zamówienie {mainRisk.orderNumber}. Dostępne jest{' '}
-              {mainRisk.onHand} m² materiału {mainRisk.materialCode}
-              {' '}przy zapotrzebowaniu {mainRisk.required} m².
-              Pierwsza dostawa od {mainRisk.supplier} jest planowana
-              na {mainRisk.firstDelivery}, a wysyłka do klienta
-              na {mainRisk.shipmentDate}.
-            </p>
-
-            <NavLink
-              className="primary-button"
-              to="/briefing"
-            >
-              Otwórz pełny briefing
-            </NavLink>
-          </div>
-        </div>
-
-        <div className="hero-summary">
-          <span>Priorytet dnia</span>
-
-          <strong>{mainRisk.orderNumber}</strong>
-
-          <p>
-            Ryzyko terminu z powodu niedoboru{' '}
-            {mainRisk.materialCode}.
-          </p>
-
-          <div className="hero-summary-status">
-            <span className="status-dot warning" />
-            AT RISK
-          </div>
-        </div>
-      </section>
-
-      <section className="metrics-grid">
-        {metrics.map((metric) => (
-          <article
-            className="metric-card"
-            key={metric.label}
+    <div className="ui-page-stack dashboard-v2">
+      <PageHeader
+        eyebrow="Executive workspace"
+        title={`Dzień dobry, ${currentUser.fullName.split(' ')[0]}`}
+        description={
+          `Najważniejsze informacje operacyjne Nexalvora Industries. ` +
+          `Aktualny priorytet: ${mainRisk.orderNumber} i niedobór ` +
+          `${mainRisk.materialCode}.`
+        }
+        actions={
+          <NavLink
+            className="ui-button ui-button--primary"
+            to="/briefing"
           >
-            <span>{metric.label}</span>
-            <strong>{metric.value}</strong>
-            <p>{metric.detail}</p>
-          </article>
-        ))}
+            <Sparkles size={17} />
+            Otwórz briefing
+          </NavLink>
+        }
+      />
+
+      <section className="ui-kpi-grid">
+        <KpiCard
+          label="Aktywny pipeline"
+          value={`${formatPln(demoSales.openPipelinePln)} PLN`}
+          meta="3 aktywne szanse sprzedażowe"
+          icon={<TrendingUp size={20} />}
+        />
+
+        <KpiCard
+          label="Wygrane szanse"
+          value={`${formatPln(demoSales.wonValuePln)} PLN`}
+          meta="OPP-2026-041 → ORD-1048"
+          icon={<Trophy size={20} />}
+        />
+
+        <KpiCard
+          label="Ryzyka operacyjne"
+          value="2"
+          meta="1 wysokie · 1 opóźnione"
+          icon={<TriangleAlert size={20} />}
+        />
+
+        <KpiCard
+          label="Decyzje"
+          value={demoApprovals.length}
+          meta={`${approvedApprovals.length} zatwierdzone · ${pendingApprovals.length} oczekująca`}
+          icon={<CircleCheckBig size={20} />}
+        />
       </section>
 
-      <section className="dashboard-grid">
-        <article className="panel-card approvals-panel">
-          <div className="panel-header">
+      <section className="dashboard-v2__primary-grid">
+        <article className="ui-card dashboard-v2__risk-card">
+          <div className="dashboard-v2__risk-top">
             <div>
-              <span className="section-kicker">
-                Governance
+              <span className="dashboard-v2__overline">
+                Priorytet dnia
               </span>
 
-              <h3>Zatwierdzenia</h3>
+              <h2>{mainRisk.orderNumber}</h2>
+
+              <p>
+                Ryzyko terminu produkcji z powodu niedoboru
+                materiału {mainRisk.materialCode}.
+              </p>
             </div>
 
-            <NavLink
-              className="text-button"
-              to="/approvals"
-            >
-              Zobacz wszystkie
-            </NavLink>
+            <StatusBadge tone="warning">
+              AT RISK
+            </StatusBadge>
           </div>
 
-          <div className="approval-list">
+          <div className="dashboard-v2__risk-metrics">
+            <div>
+              <span>Dostępne</span>
+              <strong>{mainRisk.onHand} m²</strong>
+            </div>
+
+            <div>
+              <span>Wymagane</span>
+              <strong>{mainRisk.required} m²</strong>
+            </div>
+
+            <div>
+              <span>Niedobór</span>
+              <strong>{mainRisk.shortage} m²</strong>
+            </div>
+
+            <div>
+              <span>Wysyłka</span>
+              <strong>{mainRisk.shipmentDate}</strong>
+            </div>
+          </div>
+
+          <div className="dashboard-v2__risk-note">
+            <TriangleAlert size={20} />
+
+            <div>
+              <strong>
+                Dostawa pozostawia ograniczony bufor czasowy
+              </strong>
+
+              <p>
+                Pierwsze {mainRisk.firstDeliveryQuantity} m² od{' '}
+                {mainRisk.supplier} ma dotrzeć{' '}
+                {mainRisk.firstDelivery}, tylko dwa dni przed
+                planowaną wysyłką.
+              </p>
+            </div>
+          </div>
+
+          <NavLink
+            className="dashboard-v2__text-link"
+            to="/briefing"
+          >
+            Zobacz pełną analizę
+            <ArrowRight size={16} />
+          </NavLink>
+        </article>
+
+        <article className="ui-card dashboard-v2__panel">
+          <SectionHeader
+            title="Zatwierdzenia"
+            description="Decyzje wymagające kontroli człowieka"
+            meta={
+              <NavLink
+                className="dashboard-v2__text-link"
+                to="/approvals"
+              >
+                Wszystkie
+                <ArrowRight size={15} />
+              </NavLink>
+            }
+          />
+
+          <div className="dashboard-v2__approval-list">
             {demoApprovals.map((approval) => (
               <div
-                className="approval-item"
+                className="dashboard-v2__approval-row"
                 key={approval.code}
               >
-                <div className="approval-icon">
+                <div className="dashboard-v2__row-icon">
                   <Workflow size={18} />
                 </div>
 
-                <div className="approval-content">
-                  <div>
-                    <strong>{approval.title}</strong>
-                    <span>{approval.code}</span>
-                  </div>
-
-                  <span
-                    className={
-                      approval.status === 'PENDING'
-                        ? 'priority warning'
-                        : 'priority success'
-                    }
-                  >
-                    {approval.status === 'PENDING'
-                      ? 'Oczekuje'
-                      : 'Zatwierdzone'}
-                  </span>
+                <div className="dashboard-v2__row-content">
+                  <strong>{approval.title}</strong>
+                  <span>{approval.code}</span>
                 </div>
+
+                <StatusBadge
+                  tone={
+                    approval.status === 'PENDING'
+                      ? 'warning'
+                      : 'success'
+                  }
+                >
+                  {approval.status === 'PENDING'
+                    ? 'Oczekuje'
+                    : 'Zatwierdzone'}
+                </StatusBadge>
               </div>
             ))}
           </div>
 
-          <div className="panel-summary">
-            <span>Wymaga uwagi</span>
-            <strong>{pendingApprovals}</strong>
-          </div>
-        </article>
-
-        <article className="panel-card integrations-panel">
-          <div className="panel-header">
-            <div>
-              <span className="section-kicker">
-                Data sources
-              </span>
-
-              <h3>Integracje</h3>
-            </div>
-
-            <NavLink
-              className="text-button"
-              to="/integrations"
-            >
-              Zarządzaj
-            </NavLink>
-          </div>
-
-          <div className="integration-list">
-            {demoIntegrations.map((integration) => (
-              <div
-                className="integration-row"
-                key={integration.key}
-              >
-                <div>
-                  <span className="integration-dot" />
-
-                  <div>
-                    <strong>{integration.name}</strong>
-                    <span>{integration.provider}</span>
-                  </div>
-                </div>
-
-                <span className="integration-status">
-                  Gotowe
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="panel-summary">
-            <span>Aktywne źródła</span>
-            <strong>
-              {readyIntegrations}/{demoIntegrations.length}
-            </strong>
+          <div className="dashboard-v2__panel-footer">
+            <span>Wymaga decyzji</span>
+            <strong>{pendingApprovals.length}</strong>
           </div>
         </article>
       </section>
 
-      <section className="dashboard-grid">
-        <article className="panel-card activity-panel">
-          <div className="panel-header">
-            <div>
-              <span className="section-kicker">
-                Audit trail
-              </span>
+      <section className="dashboard-v2__secondary-grid">
+        <article className="ui-card dashboard-v2__panel">
+          <SectionHeader
+            title="Integracje"
+            description="Aktywne źródła danych"
+            meta={
+              <NavLink
+                className="dashboard-v2__text-link"
+                to="/integrations"
+              >
+                Zarządzaj
+                <ArrowRight size={15} />
+              </NavLink>
+            }
+          />
 
-              <h3>Ostatnia aktywność</h3>
-            </div>
+          <div className="dashboard-v2__integration-list">
+            {demoIntegrations.map((integration) => (
+              <div
+                className="dashboard-v2__integration-row"
+                key={integration.key}
+              >
+                <div className="dashboard-v2__row-icon">
+                  <Plug size={18} />
+                </div>
 
-            <NavLink
-              className="text-button"
-              to="/audit"
-            >
-              Pełny audyt
-            </NavLink>
+                <div className="dashboard-v2__row-content">
+                  <strong>{integration.name}</strong>
+                  <span>{integration.provider}</span>
+                </div>
+
+                <StatusBadge tone="success">
+                  Gotowe
+                </StatusBadge>
+              </div>
+            ))}
           </div>
 
-          <div className="activity-list">
-            {demoAuditEvents.slice(-4).reverse().map((event) => (
+          <div className="dashboard-v2__panel-footer">
+            <span>Aktywne źródła</span>
+
+            <strong>
+              {readyIntegrations.length}/{demoIntegrations.length}
+            </strong>
+          </div>
+        </article>
+
+        <article className="ui-card dashboard-v2__panel">
+          <SectionHeader
+            title="Ostatnia aktywność"
+            description="Najnowsze zdarzenia w systemie"
+            meta={
+              <NavLink
+                className="dashboard-v2__text-link"
+                to="/audit"
+              >
+                Pełny audyt
+                <ArrowRight size={15} />
+              </NavLink>
+            }
+          />
+
+          <div className="dashboard-v2__activity-list">
+            {recentEvents.map((event) => (
               <div
-                className="activity-item"
+                className="dashboard-v2__activity-row"
                 key={`${event.time}-${event.event}`}
               >
-                <div className="activity-icon">
+                <div className="dashboard-v2__activity-marker">
                   <Activity size={17} />
                 </div>
 
-                <div>
+                <div className="dashboard-v2__activity-content">
                   <strong>{event.description}</strong>
+
                   <span>
                     {event.time} · {event.event}
                   </span>
@@ -263,58 +300,10 @@ function DashboardPage() {
               </div>
             ))}
           </div>
-        </article>
 
-        <article className="panel-card ai-status-panel">
-          <div className="panel-header">
-            <div>
-              <span className="section-kicker">
-                AI intelligence
-              </span>
-
-              <h3>Status analizy</h3>
-            </div>
-
-            <Database size={19} />
-          </div>
-
-          <div className="ai-status-content">
-            <div className="ai-status-main">
-              <div className="ai-status-icon">
-                <Sparkles size={22} />
-              </div>
-
-              <div>
-                <strong>
-                  Wykryto ryzyko dla {mainRisk.orderNumber}
-                </strong>
-
-                <p>
-                  Niedobór {mainRisk.shortage} m² materiału{' '}
-                  {mainRisk.materialCode}. Dostawa 200 m²
-                  zaplanowana na {mainRisk.firstDelivery}
-                  pozostawia ograniczony bufor przed wysyłką.
-                </p>
-              </div>
-            </div>
-
-            <div className="ai-status-meta">
-              <span>
-                <PlugZap size={15} />
-                ERP + Gmail + Knowledge Hub
-              </span>
-
-              <span>
-                Poziom ryzyka: {mainRisk.riskLevel}
-              </span>
-            </div>
-
-            <NavLink
-              className="text-button"
-              to="/assistant"
-            >
-              Otwórz Asystenta AI
-            </NavLink>
+          <div className="dashboard-v2__panel-footer">
+            <span>Audit trail</span>
+            <strong>Aktywny</strong>
           </div>
         </article>
       </section>

@@ -1,220 +1,207 @@
 import {
   CalendarDays,
-  CheckCircle2,
-  Cloud,
   Database,
-  FileText,
   Mail,
-  PlugZap,
+  Plug,
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react'
 
+import KpiCard from '../components/ui/KpiCard'
+import PageHeader from '../components/ui/PageHeader'
+import SectionHeader from '../components/ui/SectionHeader'
+import StatusBadge from '../components/ui/StatusBadge'
 import { demoIntegrations } from '../data/demoData'
 
 import './IntegrationsPage.css'
 
-const integrationPresentation = {
-  gmail: {
-    icon: Mail,
-    mode: 'Read-only',
-    records: '3 wiadomości',
-    lastSync: '19 września 2026 · 10:20',
-    description:
-      'Komunikacja z dostawcami i klientami wykorzystywana w analizie operacyjnej.',
-  },
-  'google-drive': {
-    icon: Cloud,
-    mode: 'Read-only',
-    records: '5 dokumentów',
-    lastSync: '19 września 2026 · 10:15',
-    description:
-      'Dokumentacja techniczna, zakupowa i handlowa Nexalvora.',
-  },
-  sharepoint: {
-    icon: FileText,
-    mode: 'Read-only',
-    records: '5 dokumentów',
-    lastSync: '19 września 2026 · 10:14',
-    description:
-      'Kontrolowane procedury jakościowe, bezpieczeństwa i produkcji.',
-  },
-  'google-calendar': {
-    icon: CalendarDays,
-    mode: 'Read-only',
-    records: '4 wydarzenia',
-    lastSync: '19 września 2026 · 10:18',
-    description:
-      'Spotkania operacyjne, odbiory materiałów i terminy związane z ORD-1048.',
-  },
-  erp: {
-    icon: Database,
-    mode: 'Read-only',
-    records: '5 zamówień · 6 pozycji magazynowych',
-    lastSync: '19 września 2026 · 12:00',
-    description:
-      'Zamówienia, stany magazynowe i dane operacyjne Nexalvora ERP.',
-  },
-} as const
+function getIntegrationIcon(name: string) {
+  const normalized = name.toLowerCase()
 
-const integrations = demoIntegrations.map((integration) => ({
-  ...integration,
-  ...integrationPresentation[
-    integration.key as keyof typeof integrationPresentation
-  ],
-}))
+  if (normalized.includes('gmail')) {
+    return Mail
+  }
+
+  if (normalized.includes('calendar')) {
+    return CalendarDays
+  }
+
+  if (
+    normalized.includes('erp') ||
+    normalized.includes('database')
+  ) {
+    return Database
+  }
+
+  return Plug
+}
 
 function IntegrationsPage() {
-  const readyCount = integrations.filter(
+  const readyCount = demoIntegrations.filter(
     (integration) => integration.status === 'READY',
   ).length
 
-  const fileSourceCount = integrations.filter(
-    (integration) => integration.capability === 'READ_FILES',
-  ).length
-
   return (
-    <div className="integrations-page">
-      <section className="integrations-hero">
-        <div className="integrations-hero-main">
-          <div className="integrations-hero-icon">
-            <PlugZap size={23} />
+    <div className="ui-page-stack integrations-v2">
+      <PageHeader
+        eyebrow="Enterprise integrations"
+        title="Integracje"
+        description={
+          'Źródła danych podłączone do Enterprise AI Workspace. ' +
+          'Integracje w scenariuszu demo działają w bezpiecznym trybie odczytu.'
+        }
+        actions={
+          <div className="integrations-v2__security">
+            <ShieldCheck size={18} />
+
+            <div>
+              <span>Data access</span>
+              <strong>Controlled</strong>
+            </div>
           </div>
+        }
+      />
 
-          <div>
-            <span className="section-kicker">
-              Enterprise integrations
-            </span>
+      <section className="ui-kpi-grid">
+        <KpiCard
+          label="Integracje"
+          value={demoIntegrations.length}
+          meta="Źródła danych w Workspace"
+          icon={<Plug size={20} />}
+        />
 
-            <h2>Integracje</h2>
+        <KpiCard
+          label="Gotowe"
+          value={readyCount}
+          meta="Integracje dostępne w scenariuszu demo"
+          icon={<ShieldCheck size={20} />}
+        />
 
-            <p>
-              Połączone źródła danych Nexalvora wykorzystywane
-              przez Enterprise AI Workspace do odczytu wiadomości,
-              dokumentów, kalendarza i danych ERP.
-            </p>
-          </div>
-        </div>
+        <KpiCard
+          label="Read-only"
+          value={demoIntegrations.length}
+          meta="Brak niekontrolowanych zapisów do systemów źródłowych"
+          icon={<Database size={20} />}
+        />
 
-        <div className="integrations-security">
-          <ShieldCheck size={18} />
-
-          <div>
-            <span>Tryb dostępu</span>
-            <strong>Read-only</strong>
-          </div>
-        </div>
+        <KpiCard
+          label="Problemy"
+          value="0"
+          meta="Brak niedostępnych źródeł w scenariuszu demo"
+          icon={<RefreshCw size={20} />}
+        />
       </section>
 
-      <section className="integrations-stats">
-        <article className="integration-stat-card">
-          <span>Integracje</span>
-          <strong>{integrations.length}</strong>
-        </article>
+      <section className="ui-section-stack">
+        <SectionHeader
+          title="Źródła danych"
+          description="Systemy dostępne dla Enterprise AI Workspace"
+          meta={`${demoIntegrations.length} integracji`}
+        />
 
-        <article className="integration-stat-card">
-          <span>Gotowe</span>
-          <strong>{readyCount}</strong>
-        </article>
+        <div className="integrations-v2__grid">
+          {demoIntegrations.map((integration) => {
+            const Icon = getIntegrationIcon(
+              integration.name,
+            )
 
-        <article className="integration-stat-card">
-          <span>Źródła plików</span>
-          <strong>{fileSourceCount}</strong>
-        </article>
+            return (
+              <article
+                className="ui-card integrations-v2__card"
+                key={integration.key}
+              >
+                <header className="integrations-v2__card-header">
+                  <div className="integrations-v2__identity">
+                    <div className="integrations-v2__icon">
+                      <Icon size={21} />
+                    </div>
 
-        <article className="integration-stat-card">
-          <span>Tryb zapisu</span>
-          <strong>0</strong>
-        </article>
-      </section>
+                    <div>
+                      <h2>{integration.name}</h2>
 
-      <section className="integrations-grid">
-        {integrations.map((integration) => {
-          const Icon = integration.icon
-          const isReady = integration.status === 'READY'
+                      <span>
+                        {integration.provider}
+                      </span>
+                    </div>
+                  </div>
 
-          return (
-            <article
-              className="panel-card integration-card"
-              key={integration.key}
-            >
-              <div className="integration-card-header">
-                <div className="integration-card-heading">
-                  <div className="integration-card-icon">
-                    <Icon size={20} />
+                  <StatusBadge tone="success">
+                    Gotowe
+                  </StatusBadge>
+                </header>
+
+                <div className="integrations-v2__meta-grid">
+                  <div>
+                    <span>Tryb</span>
+                    <strong>Read-only</strong>
                   </div>
 
                   <div>
-                    <span className="section-kicker">
-                      {integration.provider}
-                    </span>
-
-                    <h3>{integration.name}</h3>
+                    <span>Status</span>
+                    <strong>{integration.status}</strong>
                   </div>
                 </div>
 
-                <span
-                  className={`integration-card-status ${
-                    isReady ? 'ready' : 'degraded'
-                  }`}
-                >
-                  <span className="integration-card-status-dot" />
-                  {isReady ? 'Gotowe' : 'Degraded'}
-                </span>
-              </div>
+                <section className="integrations-v2__capabilities">
+                  <span className="integrations-v2__label">
+                    Dostęp
+                  </span>
 
-              <p className="integration-card-description">
-                {integration.description}
-              </p>
+                  <div className="integrations-v2__chips">
+                    <span className="integrations-v2__chip">
+                      Read-only
+                    </span>
 
-              <div className="integration-card-details">
-                <div>
-                  <span>Tryb</span>
-                  <strong>{integration.mode}</strong>
-                </div>
+                    <span className="integrations-v2__chip">
+                      Dane źródłowe
+                    </span>
 
-                <div>
-                  <span>Dane</span>
-                  <strong>{integration.records}</strong>
-                </div>
+                    <span className="integrations-v2__chip">
+                      Bezpieczny dostęp
+                    </span>
+                  </div>
+                </section>
 
-                <div>
-                  <span>Ostatnia synchronizacja</span>
-                  <strong>{integration.lastSync}</strong>
-                </div>
-              </div>
+                <footer className="integrations-v2__footer">
+                  <div className="integrations-v2__health">
+                    <span className="integrations-v2__health-dot" />
 
-              <div className="integration-capabilities">
-                <span className="integration-capability">
-                  {integration.capability}
-                </span>
-              </div>
-
-              <div className="integration-card-footer">
-                <div className="integration-health">
-                  {isReady ? (
-                    <CheckCircle2 size={16} />
-                  ) : (
-                    <RefreshCw size={16} />
-                  )}
+                    <span>
+                      Połączenie dostępne
+                    </span>
+                  </div>
 
                   <span>
-                    {isReady
-                      ? 'Połączenie działa prawidłowo'
-                      : 'Wymaga ponownej synchronizacji'}
+                    Demo connector
                   </span>
-                </div>
+                </footer>
+              </article>
+            )
+          })}
+        </div>
+      </section>
 
-                <button
-                  className="integration-details-button"
-                  type="button"
-                >
-                  Szczegóły
-                </button>
-              </div>
-            </article>
-          )
-        })}
+      <section className="ui-card integrations-v2__policy">
+        <div className="integrations-v2__policy-icon">
+          <ShieldCheck size={22} />
+        </div>
+
+        <div>
+          <span className="integrations-v2__overline">
+            Integration governance
+          </span>
+
+          <h2>
+            Systemy źródłowe pozostają pod kontrolą
+          </h2>
+
+          <p>
+            Enterprise AI Workspace wykorzystuje integracje jako
+            kontrolowane źródła danych. Operacje modyfikujące dane
+            wymagają osobnego mechanizmu governance i nie są wykonywane
+            przez read-only connectors.
+          </p>
+        </div>
       </section>
     </div>
   )

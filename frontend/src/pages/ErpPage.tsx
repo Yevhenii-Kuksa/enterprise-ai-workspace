@@ -1,371 +1,398 @@
 import {
-  AlertTriangle,
   Boxes,
-  CalendarDays,
-  CheckCircle2,
-  CircleDollarSign,
-  Clock3,
   Database,
-  PackageCheck,
-  Search,
-  Truck,
+  PackageSearch,
+  ShieldCheck,
+  ShoppingCart,
+  TriangleAlert,
 } from 'lucide-react'
 
-import {
-  demoOrders,
-  demoSales,
-  mainRisk,
-} from '../data/demoData'
+import DataTable, {
+  type DataTableColumn,
+} from '../components/ui/DataTable'
+import KpiCard from '../components/ui/KpiCard'
+import PageHeader from '../components/ui/PageHeader'
+import SectionHeader from '../components/ui/SectionHeader'
+import StatusBadge from '../components/ui/StatusBadge'
+import { mainRisk } from '../data/demoData'
 
 import './ErpPage.css'
 
-const formatPln = (value: number) =>
-  new Intl.NumberFormat('pl-PL').format(value)
+type OrderLifecycle =
+  | 'DRAFT'
+  | 'IN_PROGRESS'
+  | 'READY'
 
-const orderPresentation: Record<
-  string,
-  {
-    value: string
-    availability: string
-    availabilityTone: string
-  }
-> = {
-  'ORD-1048': {
-    value: `${formatPln(686_400)} PLN`,
-    availability: `Brak ${mainRisk.shortage} m² ${mainRisk.materialCode}`,
-    availabilityTone: 'warning',
-  },
-  'ORD-1047': {
-    value: `${formatPln(420_000)} PLN`,
-    availability: 'Dostępne',
-    availabilityTone: 'success',
-  },
-  'ORD-1046': {
-    value: `${formatPln(315_000)} PLN`,
-    availability: 'Dostępne',
-    availabilityTone: 'success',
-  },
-  'ORD-1045': {
-    value: `${formatPln(185_000)} PLN`,
-    availability: 'Monitoruj dostępność',
-    availabilityTone: 'error',
-  },
-  'ORD-1044': {
-    value: '—',
-    availability: 'Rezerwacja',
-    availabilityTone: 'neutral',
-  },
+type DelayState =
+  | 'ON_TIME'
+  | 'AT_RISK'
+  | 'DELAYED'
+
+type OrderRecord = {
+  orderNumber: string
+  customer: string
+  product: string
+  lifecycle: OrderLifecycle
+  delayState: DelayState
+  shipmentDate: string | null
 }
 
-const orders = demoOrders.map((order) => ({
-  ...order,
-  ...orderPresentation[order.number],
-}))
-
-const stockAlerts = [
+const orders: OrderRecord[] = [
   {
-    code: mainRisk.materialCode,
-    name: mainRisk.materialName,
-    current: `${mainRisk.onHand} m²`,
-    minimum: `${mainRisk.safetyStock} m²`,
-    status: `Niedobór ${mainRisk.shortage} m²`,
-    tone: 'warning',
+    orderNumber: 'ORD-1048',
+    customer: 'Baltic Construction Group',
+    product: '24 × NX-Mod Technical',
+    lifecycle: 'IN_PROGRESS',
+    delayState: 'AT_RISK',
+    shipmentDate: '23.09.2026',
   },
   {
-    code: 'MAT-118',
-    name: 'Galvanized Steel Profile 120',
-    current: '920 mb',
-    minimum: '300 mb',
-    status: 'Dostępne',
-    tone: 'success',
+    orderNumber: 'ORD-1047',
+    customer: 'NordBuild Development',
+    product: 'NX-Mod Office',
+    lifecycle: 'IN_PROGRESS',
+    delayState: 'ON_TIME',
+    shipmentDate: '28.09.2026',
   },
   {
-    code: 'MAT-331',
-    name: 'Fire-rated Gypsum Board',
-    current: '640 m²',
-    minimum: '200 m²',
-    status: 'Dostępne',
-    tone: 'success',
+    orderNumber: 'ORD-1046',
+    customer: 'Mazovia Logistics Parks',
+    product: 'NX-Wall Pro',
+    lifecycle: 'READY',
+    delayState: 'ON_TIME',
+    shipmentDate: '20.09.2026',
+  },
+  {
+    orderNumber: 'ORD-1045',
+    customer: 'Vistula Property Group',
+    product: 'NX-Facade',
+    lifecycle: 'IN_PROGRESS',
+    delayState: 'DELAYED',
+    shipmentDate: '18.09.2026',
+  },
+  {
+    orderNumber: 'ORD-1044',
+    customer: 'Polaris Industrial Development',
+    product: 'NX-Mod Technical',
+    lifecycle: 'DRAFT',
+    delayState: 'ON_TIME',
+    shipmentDate: null,
   },
 ]
 
+function getLifecycleTone(
+  lifecycle: OrderLifecycle,
+) {
+  if (lifecycle === 'READY') {
+    return 'success' as const
+  }
+
+  if (lifecycle === 'IN_PROGRESS') {
+    return 'info' as const
+  }
+
+  return 'neutral' as const
+}
+
+function getDelayTone(
+  delayState: DelayState,
+) {
+  if (delayState === 'DELAYED') {
+    return 'danger' as const
+  }
+
+  if (delayState === 'AT_RISK') {
+    return 'warning' as const
+  }
+
+  return 'success' as const
+}
+
 function ErpPage() {
-  const activeOrders = orders.filter(
-    (order) => order.lifecycle !== 'DRAFT',
-  )
+  const delayedOrders = orders.filter(
+    (order) => order.delayState === 'DELAYED',
+  ).length
 
   const atRiskOrders = orders.filter(
     (order) => order.delayState === 'AT_RISK',
   ).length
 
-  const delayedOrders = orders.filter(
-    (order) => order.delayState === 'DELAYED',
-  ).length
+  const orderColumns: DataTableColumn<OrderRecord>[] = [
+    {
+      key: 'order',
+      header: 'Zamówienie',
+      render: (order) => (
+        <div className="erp-v2__order-cell">
+          <div className="erp-v2__order-icon">
+            <Boxes size={18} />
+          </div>
+
+          <div>
+            <span className="ui-table__primary">
+              {order.orderNumber}
+            </span>
+
+            <span className="ui-table__secondary">
+              {order.customer}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'product',
+      header: 'Produkt',
+      width: '250px',
+      render: (order) => order.product,
+    },
+    {
+      key: 'lifecycle',
+      header: 'Lifecycle',
+      width: '170px',
+      render: (order) => (
+        <StatusBadge
+          tone={getLifecycleTone(order.lifecycle)}
+        >
+          {order.lifecycle}
+        </StatusBadge>
+      ),
+    },
+    {
+      key: 'delay',
+      header: 'Delay state',
+      width: '160px',
+      render: (order) => (
+        <StatusBadge
+          tone={getDelayTone(order.delayState)}
+        >
+          {order.delayState}
+        </StatusBadge>
+      ),
+    },
+    {
+      key: 'shipment',
+      header: 'Wysyłka',
+      width: '150px',
+      render: (order) =>
+        order.shipmentDate ?? 'Nie ustalono',
+    },
+  ]
 
   return (
-    <div className="erp-page">
-      <section className="erp-hero">
-        <div className="erp-hero-main">
-          <div className="erp-hero-icon">
-            <Database size={23} />
+    <div className="ui-page-stack erp-v2">
+      <PageHeader
+        eyebrow="ERP intelligence"
+        title="ERP"
+        description={
+          'Operacyjny podgląd zamówień, stanów materiałowych i dostaw. ' +
+          'Integracja ERP działa w trybie tylko do odczytu.'
+        }
+        actions={
+          <div className="erp-v2__readonly">
+            <ShieldCheck size={18} />
+
+            <div>
+              <span>Tryb integracji</span>
+              <strong>Read-only</strong>
+            </div>
           </div>
+        }
+      />
 
-          <div>
-            <span className="section-kicker">
-              ERP intelligence
-            </span>
+      <section className="ui-kpi-grid">
+        <KpiCard
+          label="Zamówienia"
+          value={orders.length}
+          meta="Aktywne rekordy w scenariuszu demo"
+          icon={<Database size={20} />}
+        />
 
-            <h2>ERP</h2>
+        <KpiCard
+          label="AT RISK"
+          value={atRiskOrders}
+          meta={`${mainRisk.orderNumber} wymaga monitorowania`}
+          icon={<TriangleAlert size={20} />}
+        />
 
-            <p>
-              Podgląd zamówień, stanów magazynowych i danych
-              operacyjnych z systemu ERP w trybie read-only.
-            </p>
-          </div>
-        </div>
+        <KpiCard
+          label="Opóźnione"
+          value={delayedOrders}
+          meta="Zamówienia z delay_state DELAYED"
+          icon={<Boxes size={20} />}
+        />
 
-        <div className="erp-readonly">
-          <PackageCheck size={18} />
-
-          <div>
-            <span>Tryb dostępu</span>
-            <strong>Read-only</strong>
-          </div>
-        </div>
+        <KpiCard
+          label={`Niedobór ${mainRisk.materialCode}`}
+          value={`${mainRisk.shortage} m²`}
+          meta={`${mainRisk.onHand} m² dostępne przy ${mainRisk.required} m² wymaganych`}
+          icon={<PackageSearch size={20} />}
+        />
       </section>
 
-      <section className="erp-stats">
-        <article className="erp-stat-card">
-          <div className="erp-stat-icon">
-            <Boxes size={19} />
-          </div>
+      <section className="ui-section-stack">
+        <SectionHeader
+          title="Zamówienia"
+          description={
+            'Lifecycle oraz delay state są prezentowane jako dwa niezależne stany.'
+          }
+          meta={`${orders.length} zamówień`}
+        />
 
-          <div>
-            <span>Aktywne zamówienia</span>
-            <strong>{activeOrders.length}</strong>
-            <small>
-              {orders.length} zamówień w demo dataset
-            </small>
-          </div>
-        </article>
-
-        <article className="erp-stat-card">
-          <div className="erp-stat-icon warning">
-            <AlertTriangle size={19} />
-          </div>
-
-          <div>
-            <span>Ryzyko opóźnienia</span>
-            <strong>{atRiskOrders + delayedOrders}</strong>
-            <small>
-              {atRiskOrders} AT RISK · {delayedOrders} DELAYED
-            </small>
-          </div>
-        </article>
-
-        <article className="erp-stat-card">
-          <div className="erp-stat-icon">
-            <CircleDollarSign size={19} />
-          </div>
-
-          <div>
-            <span>Wygrana wartość sprzedaży</span>
-            <strong>
-              {formatPln(demoSales.wonValuePln)} PLN
-            </strong>
-            <small>
-              OPP-2026-041 → ORD-1048
-            </small>
-          </div>
-        </article>
-
-        <article className="erp-stat-card">
-          <div className="erp-stat-icon">
-            <Truck size={19} />
-          </div>
-
-          <div>
-            <span>Dostawa krytyczna</span>
-            <strong>
-              {mainRisk.firstDeliveryQuantity} m²
-            </strong>
-            <small>
-              {mainRisk.materialCode} · {mainRisk.firstDelivery}
-            </small>
-          </div>
-        </article>
+        <DataTable
+          columns={orderColumns}
+          rows={orders}
+          getRowKey={(order) => order.orderNumber}
+        />
       </section>
 
-      <section className="panel-card erp-orders-card">
-        <div className="erp-toolbar">
-          <div>
-            <span className="section-kicker">
-              Zamówienia
-            </span>
+      <section className="erp-v2__operations-grid">
+        <article className="ui-card erp-v2__material">
+          <header className="erp-v2__card-header">
+            <div>
+              <span className="erp-v2__overline">
+                Inventory exception
+              </span>
 
-            <h3>Aktywne zamówienia</h3>
+              <h2>
+                {mainRisk.materialCode}
+              </h2>
+
+              <p>
+                Structural Insulated Panel 120 mm
+              </p>
+            </div>
+
+            <StatusBadge tone="warning">
+              Niedobór
+            </StatusBadge>
+          </header>
+
+          <div className="erp-v2__material-metrics">
+            <div>
+              <span>Na magazynie</span>
+              <strong>{mainRisk.onHand} m²</strong>
+            </div>
+
+            <div>
+              <span>Zapotrzebowanie</span>
+              <strong>{mainRisk.required} m²</strong>
+            </div>
+
+            <div>
+              <span>Niedobór</span>
+              <strong>{mainRisk.shortage} m²</strong>
+            </div>
+
+            <div>
+              <span>Powiązane zamówienie</span>
+              <strong>{mainRisk.orderNumber}</strong>
+            </div>
           </div>
 
-          <div className="erp-search">
-            <Search size={17} />
+          <div className="erp-v2__risk-note">
+            <TriangleAlert size={20} />
 
-            <input
-              aria-label="Szukaj zamówienia"
-              placeholder="Szukaj zamówienia..."
-              type="text"
-            />
-          </div>
-        </div>
-
-        <div className="erp-table">
-          <div className="erp-table-head">
-            <span>Zamówienie</span>
-            <span>Klient</span>
-            <span>Status</span>
-            <span>Ryzyko</span>
-            <span>Wartość</span>
-            <span>Termin</span>
-            <span>Dostępność</span>
-          </div>
-
-          {orders.map((order) => (
-            <div
-              className="erp-table-row"
-              key={order.number}
-            >
-              <strong className="erp-order-id">
-                {order.number}
+            <div>
+              <strong>
+                Dostępność materiału wpływa na termin ORD-1048
               </strong>
 
-              <span className="erp-customer">
-                {order.customer}
-              </span>
-
-              <span className="erp-lifecycle">
-                {order.lifecycle}
-              </span>
-
-              <span
-                className={`erp-delay-state ${order.delayState.toLowerCase()}`}
-              >
-                {order.delayState}
-              </span>
-
-              <strong className="erp-value">
-                {order.value}
-              </strong>
-
-              <div className="erp-due-date">
-                <CalendarDays size={14} />
-
-                <span>
-                  {order.deliveryDate ?? 'Nie ustalono'}
-                </span>
-              </div>
-
-              <span
-                className={`erp-availability ${order.availabilityTone}`}
-              >
-                {order.availability}
-              </span>
+              <p>
+                Pierwsza dostawa pokrywa bieżący niedobór,
+                ale pozostawia ograniczony bufor przed planowaną
+                wysyłką {mainRisk.shipmentDate}.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="erp-bottom-grid">
-        <article className="panel-card">
-          <div className="panel-header">
-            <div>
-              <span className="section-kicker">
-                Magazyn
-              </span>
-
-              <h3>Alerty stanów magazynowych</h3>
-            </div>
-
-            <AlertTriangle size={18} />
-          </div>
-
-          <div className="erp-stock-list">
-            {stockAlerts.map((item) => (
-              <div
-                className="erp-stock-item"
-                key={item.code}
-              >
-                <div className="erp-stock-main">
-                  <span
-                    className={`erp-stock-indicator ${item.tone}`}
-                  />
-
-                  <div>
-                    <strong>
-                      {item.code} · {item.name}
-                    </strong>
-
-                    <span>
-                      Stan: {item.current} · Minimum: {item.minimum}
-                    </span>
-                  </div>
-                </div>
-
-                <span
-                  className={`erp-stock-status ${item.tone}`}
-                >
-                  {item.status}
-                </span>
-              </div>
-            ))}
           </div>
         </article>
 
-        <article className="panel-card erp-sync-card">
-          <div className="panel-header">
+        <article className="ui-card erp-v2__purchase-order">
+          <header className="erp-v2__card-header">
             <div>
-              <span className="section-kicker">
-                Synchronizacja
+              <span className="erp-v2__overline">
+                Purchase order
               </span>
 
-              <h3>Status danych</h3>
+              <h2>{mainRisk.purchaseOrder}</h2>
+
+              <p>{mainRisk.supplier}</p>
             </div>
 
-            <CheckCircle2 size={18} />
+            <StatusBadge tone="warning">
+              Dostawa opóźniona
+            </StatusBadge>
+          </header>
+
+          <div className="erp-v2__po-summary">
+            <div>
+              <span>Materiał</span>
+              <strong>{mainRisk.materialCode}</strong>
+            </div>
+
+            <div>
+              <span>Łącznie</span>
+              <strong>
+                {mainRisk.firstDeliveryQuantity +
+                  mainRisk.secondDeliveryQuantity}{' '}
+                m²
+              </strong>
+            </div>
           </div>
 
-          <div className="erp-sync-main">
-            <div className="erp-sync-status">
-              <CheckCircle2 size={21} />
+          <div className="erp-v2__delivery-list">
+            <div className="erp-v2__delivery-row">
+              <div className="erp-v2__delivery-icon">
+                <ShoppingCart size={18} />
+              </div>
 
               <div>
-                <strong>Dane aktualne</strong>
+                <strong>
+                  Pierwsza partia
+                </strong>
+
                 <span>
-                  Połączenie z Nexalvora ERP działa prawidłowo
+                  {mainRisk.firstDeliveryQuantity} m²
                 </span>
               </div>
-            </div>
 
-            <div className="erp-sync-details">
-              <div>
-                <span>Ostatnia synchronizacja</span>
-                <strong>12:00</strong>
-              </div>
-
-              <div>
-                <span>Tryb</span>
-                <strong>Read-only</strong>
-              </div>
-
-              <div>
-                <span>Źródło</span>
-                <strong>demo_erp</strong>
+              <div className="erp-v2__delivery-date">
+                <span>Plan</span>
+                <strong>{mainRisk.firstDelivery}</strong>
               </div>
             </div>
 
-            <div className="erp-sync-footer">
-              <Clock3 size={14} />
-              Dane zsynchronizowane z canonical demo dataset
+            <div className="erp-v2__delivery-row">
+              <div className="erp-v2__delivery-icon">
+                <ShoppingCart size={18} />
+              </div>
+
+              <div>
+                <strong>
+                  Druga partia
+                </strong>
+
+                <span>
+                  {mainRisk.secondDeliveryQuantity} m²
+                </span>
+              </div>
+
+              <div className="erp-v2__delivery-date">
+                <span>Plan</span>
+                <strong>{mainRisk.secondDelivery}</strong>
+              </div>
             </div>
           </div>
+
+          <footer className="erp-v2__source-note">
+            <Database size={18} />
+
+            <div>
+              <strong>Źródło systemowe</strong>
+              <span>
+                ERP · dane tylko do odczytu
+              </span>
+            </div>
+          </footer>
         </article>
       </section>
     </div>

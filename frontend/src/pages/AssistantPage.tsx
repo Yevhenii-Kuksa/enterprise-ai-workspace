@@ -1,6 +1,5 @@
 import {
   ArrowUp,
-  Bot,
   FileText,
   Paperclip,
   Search,
@@ -9,6 +8,8 @@ import {
   User,
 } from 'lucide-react'
 
+import PageHeader from '../components/ui/PageHeader'
+import StatusBadge from '../components/ui/StatusBadge'
 import {
   demoKnowledgeDocuments,
   mainRisk,
@@ -36,83 +37,81 @@ const sources = demoKnowledgeDocuments.filter((document) =>
 
 function AssistantPage() {
   return (
-    <div className="assistant-page">
-      <section className="assistant-hero">
-        <div className="assistant-hero-main">
-          <div className="assistant-hero-icon">
-            <Bot size={23} />
-          </div>
+    <div className="ui-page-stack assistant-v2">
+      <PageHeader
+        eyebrow="Grounded AI"
+        title="Asystent AI"
+        description={
+          'Zadawaj pytania o dane operacyjne, dokumenty i procesy Nexalvora. ' +
+          'Odpowiedzi są oparte na zatwierdzonych źródłach i zawierają evidence.'
+        }
+        actions={
+          <div className="assistant-v2__governance">
+            <ShieldCheck size={18} />
 
-          <div>
-            <span className="section-kicker">
-              Grounded AI
-            </span>
-
-            <h2>Asystent AI</h2>
-
-            <p>
-              Zadawaj pytania o dane operacyjne, dokumenty,
-              integracje i procesy Nexalvora. Odpowiedzi są
-              przygotowywane na podstawie dostępnych źródeł.
-            </p>
-          </div>
-        </div>
-
-        <div className="assistant-hero-status">
-          <ShieldCheck size={18} />
-
-          <div>
-            <span>Status</span>
-            <strong>Grounded & governed</strong>
-          </div>
-        </div>
-      </section>
-
-      <section className="assistant-layout">
-        <article className="panel-card assistant-chat">
-          <div className="panel-header">
             <div>
-              <span className="section-kicker">
+              <span>Status AI</span>
+              <strong>Grounded & governed</strong>
+            </div>
+          </div>
+        }
+      />
+
+      <section className="assistant-v2__layout">
+        <article className="ui-card assistant-v2__workspace">
+          <header className="assistant-v2__workspace-header">
+            <div>
+              <span className="assistant-v2__overline">
                 Rozmowa
               </span>
 
-              <h3>Analiza ORD-1048</h3>
+              <h2>Analiza ORD-1048</h2>
             </div>
 
-            <div className="assistant-chat-status">
-              <span className="status-dot" />
+            <StatusBadge tone="success">
               AI online
-            </div>
-          </div>
+            </StatusBadge>
+          </header>
 
-          <div className="assistant-conversation">
-            <div className="assistant-message user-message">
-              <div className="assistant-message-avatar">
+          <div className="assistant-v2__conversation">
+            <div className="assistant-v2__message assistant-v2__message--user">
+              <div className="assistant-v2__avatar assistant-v2__avatar--user">
                 <User size={18} />
               </div>
 
-              <div className="assistant-message-content">
-                <span>Anna Kowalska</span>
+              <div className="assistant-v2__message-content">
+                <span className="assistant-v2__author">
+                  Anna Kowalska
+                </span>
 
-                <div className="assistant-message-bubble">
-                  Dlaczego ORD-1048 ma status AT RISK i czy
-                  możemy utrzymać termin wysyłki 23.09.2026?
+                <div className="assistant-v2__bubble assistant-v2__bubble--user">
+                  Dlaczego ORD-1048 ma status AT RISK i czy możemy
+                  utrzymać termin wysyłki 23.09.2026?
                 </div>
               </div>
             </div>
 
-            <div className="assistant-message ai-message">
-              <div className="assistant-message-avatar">
+            <div className="assistant-v2__message assistant-v2__message--ai">
+              <div className="assistant-v2__avatar assistant-v2__avatar--ai">
                 <Sparkles size={18} />
               </div>
 
-              <div className="assistant-message-content">
-                <span>Enterprise AI Workspace</span>
+              <div className="assistant-v2__message-content">
+                <div className="assistant-v2__ai-heading">
+                  <span className="assistant-v2__author">
+                    Enterprise AI Workspace
+                  </span>
 
-                <div className="assistant-message-bubble">
+                  <StatusBadge tone="success">
+                    Grounded
+                  </StatusBadge>
+                </div>
+
+                <div className="assistant-v2__bubble assistant-v2__bubble--ai">
                   <p>
                     ORD-1048 ma podwyższone ryzyko terminowe z powodu
-                    dostępności materiału {mainRisk.materialCode}.
+                    dostępności materiału{' '}
+                    <strong>{mainRisk.materialCode}</strong>.
                   </p>
 
                   <p>
@@ -133,15 +132,14 @@ function AssistantPage() {
                   </p>
 
                   <p>
-                    Pierwsza dostawa ilościowo pokrywa niedobór,
-                    ale pozostawia tylko krótki bufor na przyjęcie
-                    materiału, dalszą produkcję oraz kontrolę jakości.
-                    Dlatego termin jest nadal możliwy, lecz wymaga
-                    ścisłego monitorowania i zatwierdzonych działań
-                    operacyjnych.
+                    Pierwsza dostawa ilościowo pokrywa niedobór, ale
+                    pozostawia tylko krótki bufor na przyjęcie materiału,
+                    dalszą produkcję oraz kontrolę jakości. Termin jest
+                    nadal możliwy, lecz wymaga ścisłego monitorowania i
+                    zatwierdzonych działań operacyjnych.
                   </p>
 
-                  <div className="assistant-inline-sources">
+                  <div className="assistant-v2__citations">
                     <span>[S1] TECH-12</span>
                     <span>[S2] PROD-W38</span>
                     <span>[S3] PUR-02</span>
@@ -152,16 +150,17 @@ function AssistantPage() {
             </div>
           </div>
 
-          <div className="assistant-composer">
-            <div className="assistant-input-shell">
+          <footer className="assistant-v2__composer">
+            <div className="assistant-v2__input-shell">
               <textarea
                 aria-label="Wiadomość do Asystenta AI"
                 placeholder="Zapytaj o zamówienie, materiał, dokument lub proces..."
                 rows={3}
               />
 
-              <div className="assistant-composer-actions">
+              <div className="assistant-v2__composer-actions">
                 <button
+                  className="assistant-v2__icon-button"
                   aria-label="Dodaj załącznik"
                   type="button"
                 >
@@ -169,8 +168,8 @@ function AssistantPage() {
                 </button>
 
                 <button
+                  className="assistant-v2__send-button"
                   aria-label="Wyślij wiadomość"
-                  className="assistant-send-button"
                   type="button"
                 >
                   <ArrowUp size={18} />
@@ -178,19 +177,22 @@ function AssistantPage() {
               </div>
             </div>
 
-            <div className="assistant-composer-note">
-              <ShieldCheck size={14} />
-              Odpowiedzi mogą zawierać wyłącznie informacje
-              dostępne w zatwierdzonych źródłach Workspace.
+            <div className="assistant-v2__composer-note">
+              <ShieldCheck size={15} />
+
+              <span>
+                Odpowiedzi mogą zawierać wyłącznie informacje dostępne
+                w zatwierdzonych źródłach Workspace.
+              </span>
             </div>
-          </div>
+          </footer>
         </article>
 
-        <aside className="assistant-sidebar">
-          <article className="panel-card assistant-source-card">
-            <div className="panel-header">
+        <aside className="assistant-v2__sidebar">
+          <article className="ui-card assistant-v2__source-panel">
+            <header className="assistant-v2__panel-header">
               <div>
-                <span className="section-kicker">
+                <span className="assistant-v2__overline">
                   Evidence
                 </span>
 
@@ -198,49 +200,54 @@ function AssistantPage() {
               </div>
 
               <Search size={18} />
-            </div>
+            </header>
 
-            <div className="assistant-source-list">
+            <div className="assistant-v2__source-list">
               {sources.map((source, index) => (
                 <div
-                  className="assistant-source-item"
+                  className="assistant-v2__source-row"
                   key={source.code}
                 >
-                  <div className="assistant-source-icon">
+                  <div className="assistant-v2__source-icon">
                     <FileText size={17} />
                   </div>
 
-                  <div>
+                  <div className="assistant-v2__source-copy">
                     <strong>
                       [S{index + 1}] {source.code}
                     </strong>
 
                     <span>{source.title}</span>
+
+                    <small>
+                      {source.category} · v{source.version}
+                    </small>
                   </div>
                 </div>
               ))}
             </div>
           </article>
 
-          <article className="panel-card assistant-suggestions">
-            <div className="panel-header">
+          <article className="ui-card assistant-v2__suggestions">
+            <header className="assistant-v2__panel-header">
               <div>
-                <span className="section-kicker">
+                <span className="assistant-v2__overline">
                   Sugestie
                 </span>
 
                 <h3>Zapytaj dalej</h3>
               </div>
-            </div>
+            </header>
 
-            <div className="assistant-suggestion-list">
+            <div className="assistant-v2__suggestion-list">
               {suggestedQuestions.map((question) => (
                 <button
-                  className="assistant-suggestion"
+                  className="assistant-v2__suggestion"
                   key={question}
                   type="button"
                 >
                   <Sparkles size={16} />
+
                   <span>{question}</span>
                 </button>
               ))}

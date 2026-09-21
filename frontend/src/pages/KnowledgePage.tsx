@@ -1,335 +1,235 @@
 import {
-  BookOpen,
-  CheckCircle2,
-  FileSpreadsheet,
   FileText,
-  Filter,
-  FolderOpen,
+  Library,
   Search,
-  Share2,
 } from 'lucide-react'
+import {
+  useMemo,
+  useState,
+} from 'react'
 
-import { demoKnowledgeDocuments } from '../data/demoData'
+import DataTable, {
+  type DataTableColumn,
+} from '../components/ui/DataTable'
+import PageHeader from '../components/ui/PageHeader'
+import SectionHeader from '../components/ui/SectionHeader'
+import {
+  demoKnowledgeDocuments,
+} from '../data/demoData'
 
 import './KnowledgePage.css'
 
-const documentPresentation: Record<
-  string,
-  {
-    icon: typeof FileText
-    type: string
-    source: string
-    updated: string
-    pages: string
-  }
-> = {
-  'QMS-04': {
-    icon: FileText,
-    type: 'PDF',
-    source: 'SharePoint',
-    updated: '19 września 2026',
-    pages: '18 stron',
-  },
-  'BHP-02': {
-    icon: FileText,
-    type: 'PDF',
-    source: 'SharePoint',
-    updated: '18 września 2026',
-    pages: '14 stron',
-  },
-  'PROC-07': {
-    icon: FileText,
-    type: 'DOCX',
-    source: 'Google Drive',
-    updated: '18 września 2026',
-    pages: '9 stron',
-  },
-  'TECH-12': {
-    icon: FileText,
-    type: 'PDF',
-    source: 'Google Drive',
-    updated: '19 września 2026',
-    pages: '26 stron',
-  },
-  'FIRE-03': {
-    icon: FileText,
-    type: 'PDF',
-    source: 'SharePoint',
-    updated: '16 września 2026',
-    pages: '11 stron',
-  },
-  'PUR-02': {
-    icon: FileText,
-    type: 'PDF',
-    source: 'Google Drive',
-    updated: '17 września 2026',
-    pages: '16 stron',
-  },
-  'SUP-01': {
-    icon: FileSpreadsheet,
-    type: 'XLSX',
-    source: 'Google Drive',
-    updated: '19 września 2026',
-    pages: '4 arkusze',
-  },
-  'PROD-W38': {
-    icon: FileSpreadsheet,
-    type: 'XLSX',
-    source: 'SharePoint',
-    updated: '19 września 2026',
-    pages: '6 arkuszy',
-  },
-  'LOG-05': {
-    icon: FileText,
-    type: 'PDF',
-    source: 'SharePoint',
-    updated: '15 września 2026',
-    pages: '13 stron',
-  },
-  'SALES-03': {
-    icon: FileText,
-    type: 'DOCX',
-    source: 'Google Drive',
-    updated: '14 września 2026',
-    pages: '10 stron',
-  },
-}
-
-const documents = demoKnowledgeDocuments.map((document) => ({
-  ...document,
-  ...documentPresentation[document.code],
-  status: 'Zindeksowany',
-}))
-
-const stats = [
-  {
-    label: 'Dokumenty',
-    value: String(demoKnowledgeDocuments.length),
-  },
-  {
-    label: 'Zindeksowane',
-    value: String(demoKnowledgeDocuments.length),
-  },
-  {
-    label: 'Źródła danych',
-    value: '2',
-  },
-  {
-    label: 'Aktualizacja dziś',
-    value: '4',
-  },
-]
+type KnowledgeDocument =
+  (typeof demoKnowledgeDocuments)[number]
 
 function KnowledgePage() {
-  const googleDriveCount = documents.filter(
-    (document) => document.source === 'Google Drive',
-  ).length
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] =
+    useState('ALL')
 
-  const sharePointCount = documents.filter(
-    (document) => document.source === 'SharePoint',
-  ).length
+  const categories = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          demoKnowledgeDocuments.map(
+            (document) => document.category,
+          ),
+        ),
+      ).sort(),
+    [],
+  )
+
+  const filteredDocuments = useMemo(() => {
+    const normalizedSearch = searchQuery
+      .trim()
+      .toLowerCase()
+
+    return demoKnowledgeDocuments.filter(
+      (document) => {
+        const matchesSearch =
+          normalizedSearch.length === 0 ||
+          document.title
+            .toLowerCase()
+            .includes(normalizedSearch) ||
+          document.code
+            .toLowerCase()
+            .includes(normalizedSearch) ||
+          document.category
+            .toLowerCase()
+            .includes(normalizedSearch)
+
+        const matchesCategory =
+          categoryFilter === 'ALL' ||
+          document.category === categoryFilter
+
+        return matchesSearch && matchesCategory
+      },
+    )
+  }, [categoryFilter, searchQuery])
+
+  const columns: DataTableColumn<KnowledgeDocument>[] = [
+    {
+      key: 'document',
+      header: 'Dokument',
+      render: (document) => (
+        <div className="knowledge-v2__document">
+          <div className="knowledge-v2__document-icon">
+            <FileText size={18} />
+          </div>
+
+          <div className="knowledge-v2__document-copy">
+            <span className="ui-table__primary">
+              {document.title}
+            </span>
+
+            <span className="ui-table__secondary">
+              {document.code}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'category',
+      header: 'Kategoria',
+      width: '220px',
+      render: (document) => (
+        <span className="knowledge-v2__category">
+          {document.category}
+        </span>
+      ),
+    },
+    {
+      key: 'version',
+      header: 'Wersja',
+      width: '140px',
+      render: (document) => (
+        <span className="knowledge-v2__version">
+          v{document.version}
+        </span>
+      ),
+    },
+  ]
 
   return (
-    <div className="knowledge-page">
-      <section className="knowledge-hero">
-        <div className="knowledge-hero-main">
-          <div className="knowledge-hero-icon">
-            <BookOpen size={23} />
+    <div className="ui-page-stack knowledge-v2">
+      <PageHeader
+        eyebrow="Knowledge Hub"
+        title="Baza wiedzy"
+        description={
+          'Centralna biblioteka dokumentów wykorzystywanych przez ' +
+          'Enterprise AI Workspace do wyszukiwania, RAG i odpowiedzi AI.'
+        }
+      />
+
+      <section className="knowledge-v2__overview">
+        <div className="ui-card knowledge-v2__overview-item">
+          <div className="knowledge-v2__overview-icon">
+            <Library size={20} />
           </div>
 
           <div>
-            <span className="section-kicker">
-              Knowledge Hub
-            </span>
+            <span>Dokumenty</span>
 
-            <h2>Baza wiedzy</h2>
-
-            <p>
-              Dokumenty, procedury i materiały firmowe Nexalvora
-              wykorzystywane przez Enterprise AI Workspace do
-              wyszukiwania wiedzy i generowania odpowiedzi
-              opartych na źródłach.
-            </p>
+            <strong>
+              {demoKnowledgeDocuments.length}
+            </strong>
           </div>
         </div>
 
-        <div className="knowledge-health">
-          <div className="knowledge-health-icon">
-            <CheckCircle2 size={18} />
+        <div className="ui-card knowledge-v2__overview-item">
+          <div className="knowledge-v2__overview-icon">
+            <FileText size={20} />
           </div>
 
           <div>
-            <span>Status bazy</span>
-            <strong>Gotowa do użycia</strong>
+            <span>Kategorie</span>
+
+            <strong>{categories.length}</strong>
+          </div>
+        </div>
+
+        <div className="ui-card knowledge-v2__overview-item">
+          <div className="knowledge-v2__overview-icon">
+            <Search size={20} />
+          </div>
+
+          <div>
+            <span>Widoczne wyniki</span>
+
+            <strong>
+              {filteredDocuments.length}
+            </strong>
           </div>
         </div>
       </section>
 
-      <section className="knowledge-stats">
-        {stats.map((stat) => (
-          <article
-            className="knowledge-stat-card"
-            key={stat.label}
+      <section className="ui-section-stack">
+        <SectionHeader
+          title="Biblioteka dokumentów"
+          description="Dokumenty dostępne w kontekście wiedzy organizacji"
+          meta={`${filteredDocuments.length} z ${demoKnowledgeDocuments.length}`}
+        />
+
+        <div className="knowledge-v2__toolbar">
+          <label className="knowledge-v2__search">
+            <Search
+              size={18}
+              strokeWidth={1.9}
+            />
+
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) =>
+                setSearchQuery(event.target.value)
+              }
+              placeholder="Szukaj po nazwie, kodzie lub kategorii..."
+              aria-label="Szukaj dokumentów"
+            />
+          </label>
+
+          <select
+            className="knowledge-v2__select"
+            value={categoryFilter}
+            onChange={(event) =>
+              setCategoryFilter(event.target.value)
+            }
+            aria-label="Filtruj według kategorii"
           >
-            <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
-          </article>
-        ))}
-      </section>
+            <option value="ALL">
+              Wszystkie kategorie
+            </option>
 
-      <section className="panel-card knowledge-library">
-        <div className="knowledge-toolbar">
-          <div>
-            <span className="section-kicker">
-              Biblioteka
-            </span>
-
-            <h3>Dokumenty firmowe</h3>
-          </div>
-
-          <div className="knowledge-toolbar-actions">
-            <div className="knowledge-search">
-              <Search size={17} />
-
-              <input
-                aria-label="Szukaj dokumentów"
-                placeholder="Szukaj dokumentu..."
-                type="text"
-              />
-            </div>
-
-            <button
-              className="knowledge-filter-button"
-              type="button"
-            >
-              <Filter size={16} />
-              Filtry
-            </button>
-          </div>
-        </div>
-
-        <div className="knowledge-table">
-          <div className="knowledge-table-head">
-            <span>Dokument</span>
-            <span>Źródło</span>
-            <span>Aktualizacja</span>
-            <span>Status</span>
-            <span />
-          </div>
-
-          {documents.map((document) => {
-            const Icon = document.icon
-
-            return (
-              <div
-                className="knowledge-table-row"
-                key={document.code}
+            {categories.map((category) => (
+              <option
+                key={category}
+                value={category}
               >
-                <div className="knowledge-document">
-                  <div className="knowledge-document-icon">
-                    <Icon size={18} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {document.code} · {document.title}
-                    </strong>
-
-                    <span>
-                      {document.type} · {document.pages} · v{document.version}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="knowledge-source">
-                  <Share2 size={15} />
-                  <span>{document.source}</span>
-                </div>
-
-                <span className="knowledge-updated">
-                  {document.updated}
-                </span>
-
-                <div className="knowledge-status">
-                  <span className="knowledge-status-dot" />
-                  {document.status}
-                </div>
-
-                <button
-                  aria-label={`Otwórz ${document.title}`}
-                  className="knowledge-open-button"
-                  type="button"
-                >
-                  <FolderOpen size={17} />
-                </button>
-              </div>
-            )
-          })}
+                {category}
+              </option>
+            ))}
+          </select>
         </div>
-      </section>
 
-      <section className="knowledge-footer-grid">
-        <article className="panel-card knowledge-source-card">
-          <div className="panel-header">
-            <div>
-              <span className="section-kicker">
-                Źródła danych
-              </span>
+        <DataTable
+          columns={columns}
+          rows={filteredDocuments}
+          getRowKey={(document) => document.code}
+          emptyState={
+            <div className="knowledge-v2__empty">
+              <FileText size={26} />
 
-              <h3>Połączone biblioteki</h3>
-            </div>
-          </div>
-
-          <div className="knowledge-source-list">
-            <div className="knowledge-source-row">
-              <div>
-                <span className="knowledge-provider-dot" />
-                <strong>Google Drive</strong>
-              </div>
-
-              <span>{googleDriveCount} dokumentów</span>
-            </div>
-
-            <div className="knowledge-source-row">
-              <div>
-                <span className="knowledge-provider-dot" />
-                <strong>SharePoint</strong>
-              </div>
-
-              <span>{sharePointCount} dokumentów</span>
-            </div>
-          </div>
-        </article>
-
-        <article className="panel-card knowledge-rag-card">
-          <div className="panel-header">
-            <div>
-              <span className="section-kicker">
-                RAG
-              </span>
-
-              <h3>Gotowość AI</h3>
-            </div>
-          </div>
-
-          <div className="knowledge-rag-content">
-            <div className="knowledge-rag-score">
-              100%
-            </div>
-
-            <div>
               <strong>
-                Pełna gotowość demonstracyjnej bazy wiedzy
+                Brak pasujących dokumentów
               </strong>
 
-              <p>
-                Wszystkie 10 dokumentów posiada treść RAG
-                i zostało przygotowanych do wykorzystania
-                jako źródła odpowiedzi AI.
-              </p>
+              <span>
+                Zmień wyszukiwanie lub wybrany filtr.
+              </span>
             </div>
-          </div>
-        </article>
+          }
+        />
       </section>
     </div>
   )
