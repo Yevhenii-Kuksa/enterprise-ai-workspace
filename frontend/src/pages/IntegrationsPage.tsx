@@ -36,6 +36,57 @@ function getIntegrationIcon(name: string) {
   return Plug
 }
 
+function getIntegrationStatusLabel(
+  status: string,
+) {
+  const labels: Record<string, string> = {
+    READY: 'GOTOWE',
+    CONNECTED: 'POŁĄCZONO',
+    AVAILABLE: 'DOSTĘPNE',
+    SYNCING: 'SYNCHRONIZACJA',
+    PENDING: 'OCZEKUJE',
+    DEGRADED: 'OGRANICZONE',
+    ERROR: 'BŁĄD',
+    FAILED: 'BŁĄD',
+    UNAVAILABLE: 'NIEDOSTĘPNE',
+    DISCONNECTED: 'ROZŁĄCZONE',
+    DISABLED: 'WYŁĄCZONE',
+  }
+
+  return labels[status] ?? 'NIEZNANY STATUS'
+}
+
+function getIntegrationStatusTone(
+  status: string,
+) {
+  if (
+    status === 'READY' ||
+    status === 'CONNECTED' ||
+    status === 'AVAILABLE'
+  ) {
+    return 'success' as const
+  }
+
+  if (
+    status === 'SYNCING' ||
+    status === 'PENDING' ||
+    status === 'DEGRADED'
+  ) {
+    return 'warning' as const
+  }
+
+  if (
+    status === 'ERROR' ||
+    status === 'FAILED' ||
+    status === 'UNAVAILABLE' ||
+    status === 'DISCONNECTED'
+  ) {
+    return 'danger' as const
+  }
+
+  return 'neutral' as const
+}
+
 function IntegrationsPage() {
   const readyCount = demoIntegrations.filter(
     (integration) => integration.status === 'READY',
@@ -44,7 +95,7 @@ function IntegrationsPage() {
   return (
     <div className="ui-page-stack integrations-v2">
       <PageHeader
-        eyebrow="Enterprise integrations"
+        eyebrow="Integracje firmowe"
         title="Integracje"
         description={
           'Źródła danych podłączone do Enterprise AI Workspace. ' +
@@ -55,8 +106,8 @@ function IntegrationsPage() {
             <ShieldCheck size={18} />
 
             <div>
-              <span>Data access</span>
-              <strong>Controlled</strong>
+              <span>Dostęp do danych</span>
+              <strong>Kontrolowany</strong>
             </div>
           </div>
         }
@@ -66,7 +117,7 @@ function IntegrationsPage() {
         <KpiCard
           label="Integracje"
           value={demoIntegrations.length}
-          meta="Źródła danych w Workspace"
+          meta="Źródła danych w środowisku"
           icon={<Plug size={20} />}
         />
 
@@ -78,7 +129,7 @@ function IntegrationsPage() {
         />
 
         <KpiCard
-          label="Read-only"
+          label="Tylko do odczytu"
           value={demoIntegrations.length}
           meta="Brak niekontrolowanych zapisów do systemów źródłowych"
           icon={<Database size={20} />}
@@ -125,20 +176,26 @@ function IntegrationsPage() {
                     </div>
                   </div>
 
-                  <StatusBadge tone="success">
-                    Gotowe
+                  <StatusBadge
+                    tone={getIntegrationStatusTone(
+                      integration.status,
+                    )}
+                  >
+                    {getIntegrationStatusLabel(
+                      integration.status,
+                    )}
                   </StatusBadge>
                 </header>
 
                 <div className="integrations-v2__meta-grid">
                   <div>
                     <span>Tryb</span>
-                    <strong>Read-only</strong>
+                    <strong>Tylko do odczytu</strong>
                   </div>
 
                   <div>
                     <span>Status</span>
-                    <strong>{integration.status}</strong>
+                    <strong>{getIntegrationStatusLabel(integration.status)}</strong>
                   </div>
                 </div>
 
@@ -149,7 +206,7 @@ function IntegrationsPage() {
 
                   <div className="integrations-v2__chips">
                     <span className="integrations-v2__chip">
-                      Read-only
+                      Tylko do odczytu
                     </span>
 
                     <span className="integrations-v2__chip">
@@ -172,7 +229,7 @@ function IntegrationsPage() {
                   </div>
 
                   <span>
-                    Demo connector
+                    Konektor demonstracyjny
                   </span>
                 </footer>
               </article>
@@ -188,7 +245,7 @@ function IntegrationsPage() {
 
         <div>
           <span className="integrations-v2__overline">
-            Integration governance
+            Kontrola integracji
           </span>
 
           <h2>
@@ -198,8 +255,8 @@ function IntegrationsPage() {
           <p>
             Enterprise AI Workspace wykorzystuje integracje jako
             kontrolowane źródła danych. Operacje modyfikujące dane
-            wymagają osobnego mechanizmu governance i nie są wykonywane
-            przez read-only connectors.
+            wymagają osobnego mechanizmu kontroli i nie są wykonywane
+            przez konektory działające tylko w trybie odczytu.
           </p>
         </div>
       </section>

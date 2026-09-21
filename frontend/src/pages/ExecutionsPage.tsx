@@ -128,7 +128,7 @@ function ExecutionsPage() {
       width: '150px',
       render: () => (
         <StatusBadge tone="success">
-          SUCCEEDED
+          ZAKOŃCZONE
         </StatusBadge>
       ),
     },
@@ -143,7 +143,7 @@ function ExecutionsPage() {
   return (
     <div className="ui-page-stack executions-v2">
       <PageHeader
-        eyebrow="Governed execution"
+        eyebrow="Kontrolowane wykonanie"
         title="Wykonania"
         description={
           'Historia działań wykonanych po zatwierdzeniu przez uprawnionych ' +
@@ -154,8 +154,8 @@ function ExecutionsPage() {
             <ShieldCheck size={18} />
 
             <div>
-              <span>Execution policy</span>
-              <strong>Human approval required</strong>
+              <span>Zasady wykonania</span>
+              <strong>Wymagane zatwierdzenie przez człowieka</strong>
             </div>
           </div>
         }
@@ -165,7 +165,7 @@ function ExecutionsPage() {
         <KpiCard
           label="Wykonania"
           value={executions.length}
-          meta="Zarejestrowane wykonania governed actions"
+          meta="Zarejestrowane kontrolowane wykonania"
           icon={<PlayCircle size={20} />}
         />
 
@@ -184,9 +184,9 @@ function ExecutionsPage() {
         />
 
         <KpiCard
-          label="Auto-execution"
+          label="Automatyczne wykonanie"
           value="0"
-          meta="Brak krytycznych działań wykonanych bez approval"
+          meta="Brak krytycznych działań wykonanych bez zatwierdzenia"
           icon={<ShieldCheck size={20} />}
         />
       </section>
@@ -222,7 +222,7 @@ function ExecutionsPage() {
               </div>
 
               <StatusBadge tone="success">
-                SUCCEEDED
+                ZAKOŃCZONE
               </StatusBadge>
             </header>
 
@@ -246,7 +246,7 @@ function ExecutionsPage() {
 
               <div>
                 <span>Tryb</span>
-                <strong>Governed execution</strong>
+                <strong>Kontrolowane wykonanie</strong>
               </div>
             </div>
 
@@ -267,7 +267,7 @@ function ExecutionsPage() {
               </div>
 
               <div>
-                <span>Kontrola governance</span>
+                <span>Kontrola wykonania</span>
                 <p>{selectedExecution.governance}</p>
               </div>
             </section>
@@ -281,7 +281,7 @@ function ExecutionsPage() {
                 </strong>
 
                 <span>
-                  Approval → Execution → Audit trail
+                  Zatwierdzenie → Wykonanie → Ścieżka audytowa
                 </span>
               </div>
             </footer>

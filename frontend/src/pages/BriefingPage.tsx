@@ -68,7 +68,7 @@ const priorities: Array<{
       'działania zatwierdzone, ' +
       `${demoApprovals.filter((item) => item.status === 'PENDING').length} ` +
       'oczekuje na decyzję.',
-    status: 'Governance aktywny',
+    status: 'Nadzór aktywny',
     tone: 'success',
   },
 ]
@@ -181,7 +181,7 @@ function BriefingPage() {
           <strong>Wymaga uwagi</strong>
 
           <StatusBadge tone="warning">
-            HIGH RISK
+            WYSOKIE RYZYKO
           </StatusBadge>
 
           <div className="briefing-v2__risk-divider" />

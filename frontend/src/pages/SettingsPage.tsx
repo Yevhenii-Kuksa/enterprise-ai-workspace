@@ -20,7 +20,7 @@ function SettingsPage() {
   return (
     <div className="ui-page-stack settings-v2">
       <PageHeader
-        eyebrow="Workspace configuration"
+        eyebrow="Konfiguracja środowiska"
         title="Ustawienia"
         description={
           'Konfiguracja środowiska Enterprise AI Workspace, zasad AI, ' +
@@ -32,7 +32,7 @@ function SettingsPage() {
 
             <div>
               <span>Stan konfiguracji</span>
-              <strong>Production-ready</strong>
+              <strong>Gotowe produkcyjnie</strong>
             </div>
           </div>
         }
@@ -40,7 +40,7 @@ function SettingsPage() {
 
       <section className="ui-section-stack">
         <SectionHeader
-          title="Workspace"
+          title="Środowisko"
           description="Podstawowe informacje o środowisku Nexalvora"
         />
 
@@ -95,7 +95,7 @@ function SettingsPage() {
 
       <section className="ui-section-stack">
         <SectionHeader
-          title="AI i reliability"
+          title="AI i niezawodność"
           description="Konfiguracja modelu oraz bramek jakości odpowiedzi"
         />
 
@@ -107,7 +107,7 @@ function SettingsPage() {
               </div>
 
               <div>
-                <h2>AI runtime</h2>
+                <h2>Środowisko AI</h2>
 
                 <p>
                   Parametry wykorzystywane przez provider odpowiedzi.
@@ -161,7 +161,7 @@ function SettingsPage() {
               </div>
 
               <div>
-                <h2>Reliability gates</h2>
+                <h2>Bramki jakości</h2>
 
                 <p>
                   Ograniczenia chroniące przed słabo ugruntowaną odpowiedzią.
@@ -201,7 +201,7 @@ function SettingsPage() {
 
               <div className="settings-v2__row">
                 <div>
-                  <span>Grounded answers</span>
+                  <span>Odpowiedzi oparte na źródłach</span>
                   <small>Odpowiedzi wyłącznie na podstawie evidence</small>
                 </div>
 
@@ -228,7 +228,7 @@ function SettingsPage() {
               </div>
 
               <div>
-                <h2>Access control</h2>
+                <h2>Kontrola dostępu</h2>
 
                 <p>
                   Zasady dostępu do danych organizacji.
@@ -271,7 +271,7 @@ function SettingsPage() {
                 <ShieldCheck size={19} />
 
                 <div>
-                  <strong>Human approval</strong>
+                  <strong>Zatwierdzenie przez człowieka</strong>
                   <span>
                     Krytyczne działania wymagają decyzji człowieka.
                   </span>
@@ -307,7 +307,7 @@ function SettingsPage() {
                 </div>
 
                 <StatusBadge tone="info">
-                  Read-only
+                  Tylko do odczytu
                 </StatusBadge>
               </div>
 
@@ -318,7 +318,7 @@ function SettingsPage() {
                 </div>
 
                 <StatusBadge tone="info">
-                  Read-only
+                  Tylko do odczytu
                 </StatusBadge>
               </div>
 
@@ -329,7 +329,7 @@ function SettingsPage() {
                 </div>
 
                 <StatusBadge tone="info">
-                  Read-only
+                  Tylko do odczytu
                 </StatusBadge>
               </div>
             </div>
@@ -339,7 +339,7 @@ function SettingsPage() {
 
       <section className="ui-section-stack">
         <SectionHeader
-          title="Runtime"
+          title="Środowisko wykonawcze"
           description="Stan środowiska i zabezpieczeń produkcyjnych"
         />
 
@@ -352,7 +352,7 @@ function SettingsPage() {
             <div className="settings-v2__runtime-heading">
               <div>
                 <span className="settings-v2__overline">
-                  Production readiness
+                  Gotowość produkcyjna
                 </span>
 
                 <h2>
@@ -361,7 +361,7 @@ function SettingsPage() {
               </div>
 
               <StatusBadge tone="success">
-                READY
+                GOTOWE
               </StatusBadge>
             </div>
 
@@ -388,7 +388,7 @@ function SettingsPage() {
 
               <div>
                 <span>Filesystem</span>
-                <strong>Read-only</strong>
+                <strong>Tylko do odczytu</strong>
               </div>
 
               <div>

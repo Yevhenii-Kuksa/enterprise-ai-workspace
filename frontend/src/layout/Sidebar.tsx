@@ -80,7 +80,7 @@ function Sidebar() {
             </div>
 
             <div className="app-sidebar__section-label">
-                Workspace
+                Środowisko
             </div>
 
             <nav

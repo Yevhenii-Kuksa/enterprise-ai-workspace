@@ -1,7 +1,7 @@
 export const demoCompany = {
   name: 'Nexalvora Industries Sp. z o.o.',
   shortName: 'Nexalvora Industries',
-  environment: 'Production Demo',
+  environment: 'Środowisko demonstracyjne',
   dateLabel: '19 września 2026',
 }
 
@@ -163,7 +163,7 @@ export const demoKnowledgeDocuments = [
   {
     code: 'PROD-W38',
     title: 'Plan produkcji — tydzień 38',
-    category: 'Production',
+    category: 'Produkcja',
     version: '2026-W38',
   },
   {

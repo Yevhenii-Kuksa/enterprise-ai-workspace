@@ -39,7 +39,7 @@ function AssistantPage() {
   return (
     <div className="ui-page-stack assistant-v2">
       <PageHeader
-        eyebrow="Grounded AI"
+        eyebrow="AI oparte na źródłach"
         title="Asystent AI"
         description={
           'Zadawaj pytania o dane operacyjne, dokumenty i procesy Nexalvora. ' +
@@ -51,7 +51,7 @@ function AssistantPage() {
 
             <div>
               <span>Status AI</span>
-              <strong>Grounded & governed</strong>
+              <strong>Oparte na źródłach i kontrolowane</strong>
             </div>
           </div>
         }
@@ -103,7 +103,7 @@ function AssistantPage() {
                   </span>
 
                   <StatusBadge tone="success">
-                    Grounded
+                    Oparte na źródłach
                   </StatusBadge>
                 </div>
 

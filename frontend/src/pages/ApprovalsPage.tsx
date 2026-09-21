@@ -125,7 +125,7 @@ function ApprovalsPage() {
   return (
     <div className="ui-page-stack approvals-v2">
       <PageHeader
-        eyebrow="Human-in-the-loop governance"
+        eyebrow="Decyzje z udziałem człowieka"
         title="Zatwierdzenia"
         description={
           'Krytyczne działania proponowane przez AI wymagają kontroli ' +
@@ -136,7 +136,7 @@ function ApprovalsPage() {
             <ShieldCheck size={18} />
 
             <div>
-              <span>Action governance</span>
+              <span>Kontrola działań</span>
               <strong>Aktywne</strong>
             </div>
           </div>
@@ -147,7 +147,7 @@ function ApprovalsPage() {
         <KpiCard
           label="Wszystkie decyzje"
           value={demoApprovals.length}
-          meta="Aktualna kolejka governance"
+          meta="Aktualna kolejka decyzji"
           icon={<FileCheck2 size={20} />}
         />
 
@@ -161,12 +161,12 @@ function ApprovalsPage() {
         <KpiCard
           label="Zatwierdzone"
           value={approvedCount}
-          meta="Gotowe do governed execution"
+          meta="Gotowe do kontrolowanego wykonania"
           icon={<CheckCircle2 size={20} />}
         />
 
         <KpiCard
-          label="Auto-execution"
+          label="Automatyczne wykonanie"
           value="0"
           meta="Krytyczne akcje nie wykonują się automatycznie"
           icon={<ShieldCheck size={20} />}
@@ -304,7 +304,7 @@ function ApprovalsPage() {
 
             <div className="approvals-v2__decision">
               <span className="approvals-v2__overline">
-                Human decision
+                Decyzja człowieka
               </span>
 
               {selectedApproval.status === 'APPROVED' ? (

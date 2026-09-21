@@ -49,7 +49,7 @@ function DashboardPage() {
   return (
     <div className="ui-page-stack dashboard-v2">
       <PageHeader
-        eyebrow="Executive workspace"
+        eyebrow="Panel zarządczy"
         title={`Dzień dobry, ${currentUser.fullName.split(' ')[0]}`}
         description={
           `Najważniejsze informacje operacyjne Nexalvora Industries. ` +
@@ -302,7 +302,7 @@ function DashboardPage() {
           </div>
 
           <div className="dashboard-v2__panel-footer">
-            <span>Audit trail</span>
+            <span>Ścieżka audytowa</span>
             <strong>Aktywny</strong>
           </div>
         </article>

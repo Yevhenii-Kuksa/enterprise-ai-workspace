@@ -14,7 +14,7 @@ function Topbar() {
 
         <input
           type="search"
-          placeholder="Szukaj w workspace, dokumentach, zamówieniach..."
+          placeholder="Szukaj w środowisku, dokumentach, zamówieniach..."
           aria-label="Szukaj"
         />
       </label>

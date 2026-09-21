@@ -108,6 +108,30 @@ function getDelayTone(
   return 'success' as const
 }
 
+function getLifecycleLabel(
+  lifecycle: OrderLifecycle,
+) {
+  const labels: Record<OrderLifecycle, string> = {
+    DRAFT: 'WERSJA ROBOCZA',
+    IN_PROGRESS: 'W REALIZACJI',
+    READY: 'GOTOWE',
+  }
+
+  return labels[lifecycle]
+}
+
+function getDelayStateLabel(
+  delayState: DelayState,
+) {
+  const labels: Record<DelayState, string> = {
+    ON_TIME: 'NA CZAS',
+    AT_RISK: 'ZAGROŻONE',
+    DELAYED: 'OPÓŹNIONE',
+  }
+
+  return labels[delayState]
+}
+
 function ErpPage() {
   const delayedOrders = orders.filter(
     (order) => order.delayState === 'DELAYED',
@@ -147,25 +171,25 @@ function ErpPage() {
     },
     {
       key: 'lifecycle',
-      header: 'Lifecycle',
+      header: 'Etap realizacji',
       width: '170px',
       render: (order) => (
         <StatusBadge
           tone={getLifecycleTone(order.lifecycle)}
         >
-          {order.lifecycle}
+          {getLifecycleLabel(order.lifecycle)}
         </StatusBadge>
       ),
     },
     {
       key: 'delay',
-      header: 'Delay state',
+      header: 'Stan opóźnienia',
       width: '160px',
       render: (order) => (
         <StatusBadge
           tone={getDelayTone(order.delayState)}
         >
-          {order.delayState}
+          {getDelayStateLabel(order.delayState)}
         </StatusBadge>
       ),
     },
@@ -181,7 +205,7 @@ function ErpPage() {
   return (
     <div className="ui-page-stack erp-v2">
       <PageHeader
-        eyebrow="ERP intelligence"
+        eyebrow="Analiza ERP"
         title="ERP"
         description={
           'Operacyjny podgląd zamówień, stanów materiałowych i dostaw. ' +
@@ -193,7 +217,7 @@ function ErpPage() {
 
             <div>
               <span>Tryb integracji</span>
-              <strong>Read-only</strong>
+              <strong>Tylko do odczytu</strong>
             </div>
           </div>
         }
@@ -208,7 +232,7 @@ function ErpPage() {
         />
 
         <KpiCard
-          label="AT RISK"
+          label="ZAGROŻONE"
           value={atRiskOrders}
           meta={`${mainRisk.orderNumber} wymaga monitorowania`}
           icon={<TriangleAlert size={20} />}
@@ -217,7 +241,7 @@ function ErpPage() {
         <KpiCard
           label="Opóźnione"
           value={delayedOrders}
-          meta="Zamówienia z delay_state DELAYED"
+          meta="Zamówienia z opóźnieniem"
           icon={<Boxes size={20} />}
         />
 
@@ -233,7 +257,7 @@ function ErpPage() {
         <SectionHeader
           title="Zamówienia"
           description={
-            'Lifecycle oraz delay state są prezentowane jako dwa niezależne stany.'
+            'Etap realizacji oraz stan opóźnienia są prezentowane jako dwa niezależne stany.'
           }
           meta={`${orders.length} zamówień`}
         />
@@ -250,7 +274,7 @@ function ErpPage() {
           <header className="erp-v2__card-header">
             <div>
               <span className="erp-v2__overline">
-                Inventory exception
+                Wyjątek magazynowy
               </span>
 
               <h2>
@@ -258,7 +282,7 @@ function ErpPage() {
               </h2>
 
               <p>
-                Structural Insulated Panel 120 mm
+                Panel izolacyjny konstrukcyjny 120 mm
               </p>
             </div>
 
@@ -310,7 +334,7 @@ function ErpPage() {
           <header className="erp-v2__card-header">
             <div>
               <span className="erp-v2__overline">
-                Purchase order
+                Zamówienie zakupu
               </span>
 
               <h2>{mainRisk.purchaseOrder}</h2>
