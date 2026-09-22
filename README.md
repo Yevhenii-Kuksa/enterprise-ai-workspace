@@ -10,6 +10,10 @@ Built as a functional enterprise demo around a realistic production scenario for
 
 ## Overview
 
+The goal of Enterprise AI Workspace is to help employees find the information they need faster, reduce time spent searching across documents and business systems, and support better operational decisions with AI-assisted access to trusted company knowledge.
+
+The workspace complements existing company infrastructure by connecting information across ERP, email, documents and internal systems without replacing the tools already used by the business.
+
 The system connects operational data, internal knowledge and AI-assisted decision support in one workspace.
 
 It covers the full flow from detecting a business risk to recording the resulting action:
